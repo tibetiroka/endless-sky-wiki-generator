@@ -72,7 +72,7 @@ public class Main {
 			Map<RevCommit, CommitInfo> commitInfo = commits.stream()
 			                                               .parallel()
 			                                               .collect(Collectors.toMap(commit -> commit, commit -> new CommitInfo(commit, tags)));
-			System.out.println("Found " + commits.size() + " new commits");
+			System.out.println("Found " + commits.size() + " commits");
 			if(commits.isEmpty())
 				return;
 

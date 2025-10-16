@@ -18,10 +18,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.tibetiroka.endless_sky_wiki_generator.Tokenizer.IndentLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.tibetiroka.endless_sky_wiki_generator.Tokenizer.IndentLevel;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -92,7 +93,7 @@ public final class DataManager {
 	 * </ul>
 	 */
 	private @Nullable JsonObject generateDiff(@Nullable DataNode oldNode, @Nullable DataNode newNode) {
-		if(oldNode == null && newNode == null)
+		if(oldNode == newNode)
 			return null;
 		List<String> oldString = oldNode == null ? new ArrayList<>() : oldNode.toString().lines().toList();
 		List<String> newString = newNode == null ? new ArrayList<>() : newNode.toString().lines().toList();

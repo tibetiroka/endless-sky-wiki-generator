@@ -27,12 +27,18 @@ public class OutputGenerator {
 	private final Map<String, DataManager> storedData = new HashMap<>();
 
 	{
-		outputs = Map.of("ship", new OutputBuffer(),
-		                 "outfit", new OutputBuffer(),
-		                 "system", new OutputBuffer(),
-		                 "planet", new OutputBuffer(),
-		                 "shipyard", new OutputBuffer(),
-		                 "outfitter", new OutputBuffer());
+		outputs = new HashMap<>();
+		outputs.put("ship", new OutputBuffer());
+		outputs.put("outfit", new OutputBuffer());
+		outputs.put("system", new OutputBuffer());
+		outputs.put("planet", new OutputBuffer());
+		outputs.put("shipyard", new OutputBuffer());
+		outputs.put("outfitter", new OutputBuffer());
+		outputs.put("category", new OutputBuffer());
+		outputs.put("fleet", new OutputBuffer());
+		outputs.put("government", new OutputBuffer());
+		outputs.put("license", new OutputBuffer());
+		outputs.put("minable", new OutputBuffer());
 	}
 
 	public OutputGenerator(@NotNull List<@NotNull DataNode> oldNodes) {
