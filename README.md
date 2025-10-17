@@ -1,8 +1,8 @@
-# Endless Sky Wiki Generator
+# Endless Sky Wiki
 
-This repository houses various automation tools and data used with the community-made Endless Sky wiki. If you are looking for the wiki repository, visit TODO instead.
+This repository houses the semi-official Endless Sky wiki, alongside various tools and data used to make it happen. This branch of the repository houses the wiki pages; for most people, this is what you are looking for.
 > [!NOTE]
-> Each tool has its own branch. The default (master) branch is used to house shared documentation.
+> Each tool has its own branch. The default (master) branch is used to house the wiki and shared documentation.
 
 - `changelog-generator`: Git-based changelog generator and Endless Sky data parser.
   - This tool parses the entire commit history of the game, parses the data files, and generates JSON files from them.
@@ -12,6 +12,7 @@ This repository houses various automation tools and data used with the community
   - This is what enables the search bar to function without any server-side queries.
 - `packager`: Runs the above tools and packages the results to web-friendly formats.
   - The raw JSON files are compressed with gzip (which is supported by the JS compression streams API).
-  - Data files belonging to the same wiki entry are tarballed together so the client only downloads a single file.
+  - Some data files are tarballed together so the client doesn't have to download that many files.
+- `deploy`: The current state of the wiki, with all the data and web pages generated.
 
-For more details on these tools, visit each of the branches. There is also a `dev-data` branch with an example data deployment.
+For more details on these tools, visit each of the branches.
