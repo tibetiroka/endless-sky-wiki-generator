@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 function check_command() {
+  local c
+
 	for c in "$@"; do
 		if ! command -v "$c" >/dev/null 2>&1; then
 			echo "Command $c not found" 1>&2
@@ -21,16 +23,21 @@ function compress() {
 }
 
 function compress_each() {
+  local file
+  local output
+
 	IFS=$'\n' files=( $(find "$1" -type f) )
 	for file in "${files[@]}"
 	do
 		output="$2/$(realpath -m --relative-to="$1" "$file")"
 		mkdir -p "$(realpath -m "$output/..")"
-		compress "$file" "$output"
+    compress "$file" "$output"
 	done
 }
 
 function compress_bulk() {
+  local dir
+
 	dir=$(pwd)
 	cd "$1"
 	shopt -s dotglob
@@ -53,7 +60,7 @@ output="$4"
 mkdir -p "$output/index"
 mkdir -p "$output/data"
 
-compress_bulk "$index_dir/entries" "$output/index/entries"
-compress_bulk "$index_dir/references" "$output/index/references"
+compress_each "$index_dir/entries" "$output/index/entries"
+compress_each "$index_dir/references" "$output/index/references"
 
 compress_each "$generated_dir" "$output/data"
