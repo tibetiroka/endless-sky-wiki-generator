@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2025 by tibetiroka.
+ *
+ * endless-sky-wiki-generator is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * endless-sky-wiki-generator is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+.logo {
+    aspect-ratio: 1;
+    max-width: 50px;
+    padding: 5px 0 5px 5px;
+}
+
+.navbar {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.navbar > * {
+    margin-left: 5px;
+    margin-right: 5px;
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
+.navbar div {
+    width: fit-content;
+}
+
+figure figcaption {
+    font-style: italic;
+    font-size: smaller;
+}
+
+main {
+    min-height: 90vh;
+}
+
+footer {
+    margin-top: auto;
+    margin-bottom: 0;
+}
+
+footer * {
+    text-align: center;
+}
