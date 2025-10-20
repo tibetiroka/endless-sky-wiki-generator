@@ -11,18 +11,15 @@ This tool parses the entire git history of `endless-sky/endless-sky`, and:
 - generates detailed changelogs with information about the commit, committer, and game release version, and
 - stores the latest state of each ship/outfit/etc., even if they were removed from the game.
 
-This tool is written in Java. The provided maven configuration can be used to compile it into a native executable for your system, if needed:
+This tool is written in Java. To run the tool, you only need to specify a directory to clone the game into:
 ```bash
-mvn -P native package
-```
-To run the tool, you only need to specify a directory to clone the game into:
-```bash
-target/endless-sky-changelog-generator <directory>
+mvn -P portable package
+java -jar target/endless-sky-changelog-generator.jar <directory> 
 ```
 
 If you want to use this tool for development, it is recommended to use a directory mounted in memory, such as `/tmp` on most linux distributions:
 ```bash
-target/endless-sky-changelog-generator /tmp/endless-sky
+java -jar target/endless-sky-changelog-generator.jar /tmp/endless-sky
 ```
 
 The tool with clone the repository for you, or update it if it's already present. The generated JSON files are placed in the `es-wiki-diff` directory next to it.

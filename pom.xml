@@ -18,6 +18,7 @@
 		<gson.version>2.13.1</gson.version>
 		<annotations.version>26.0.1</annotations.version>
 		<diff.version>4.16</diff.version>
+		<slf4j.version>1.7.36</slf4j.version> <!--Do not update; jgit uses SLF4J 1.-->
 
 		<compiler-plugin.version>3.13.0</compiler-plugin.version>
 		<javadoc-plugin.version>3.7.0</javadoc-plugin.version>
@@ -112,66 +113,6 @@
 	<!--Release builds and native binaries-->
 	<profiles>
 		<profile>
-			<id>release</id>
-			<activation>
-				<property>
-					<name>!debug</name>
-				</property>
-			</activation>
-			<properties>
-				<performance-options>-O3</performance-options>
-			</properties>
-		</profile>
-		<profile>
-			<id>debug</id>
-			<activation>
-				<property>
-					<name>debug</name>
-				</property>
-			</activation>
-			<properties>
-				<performance-options>-Ob</performance-options>
-			</properties>
-		</profile>
-		<profile>
-			<id>native</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.graalvm.buildtools</groupId>
-						<artifactId>native-maven-plugin</artifactId>
-						<version>${native-plugin.version}</version>
-						<extensions>true</extensions>
-						<executions>
-							<execution>
-								<id>build-native</id>
-								<goals>
-									<goal>compile-no-fork</goal>
-								</goals>
-								<phase>package</phase>
-							</execution>
-						</executions>
-						<configuration>
-							<imageName>endless-sky-changelog-generator</imageName>
-							<fallback>false</fallback>
-							<buildArgs>
-								<arg>-H:+UnlockExperimentalVMOptions</arg>
-								<!--suppress UnresolvedMavenProperty -->
-								<arg>${performance-options}</arg>
-								<arg>--gc=serial</arg>
-								<arg>--initialize-at-build-time=com.tibetiroka.endless_sky_wiki_generator</arg>
-								<arg>--initialize-at-run-time=${mainClass}</arg>
-								<arg>--enable-url-protocols=http,https,jar</arg>
-								<arg>
-									-H:ReflectionConfigurationFiles=${project.basedir}/src/main/resources/META-INF/native-image/com/tibetiroka/endless_sky_wiki_generator/reflection-config-jgit.json
-								</arg>
-							</buildArgs>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
 			<id>portable</id>
 			<build>
 				<plugins>
@@ -187,6 +128,8 @@
 								</goals>
 								<phase>package</phase>
 								<configuration>
+									<finalName>endless-sky-changelog-generator</finalName>
+									<appendAssemblyId>false</appendAssemblyId>
 									<archive>
 										<manifest>
 											<addClasspath>true</addClasspath>
@@ -229,6 +172,11 @@
 			<groupId>io.github.java-diff-utils</groupId>
 			<artifactId>java-diff-utils</artifactId>
 			<version>${diff.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-nop</artifactId>
+			<version>${slf4j.version}</version>
 		</dependency>
 	</dependencies>
 </project>
