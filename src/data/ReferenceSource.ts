@@ -8,48 +8,56 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {getDomainWithProtocol} from "../utils.ts";
+import {getDomainWithProtocol} from "../web_utils.ts";
+import {equals} from "../utils.ts";
 
 export class ReferenceSource {
-    type: string = '???';
-    name: string | null = null;
+	type: string = '???';
+	name: string | null = null;
 
-    toURL(): URL {
-        if (this.name === null) {
-            return new URL(this.type, getDomainWithProtocol());
-        } else {
-            return new URL(this.name, new URL(this.type, getDomainWithProtocol()));
-        }
-    }
+	constructor(type: string, name: string | null) {
+		this.type = type;
+		this.name = name;
+	}
+}
+
+export function toURL(source: ReferenceSource): URL {
+	if (source.name === null) {
+		return new URL(source.type, getDomainWithProtocol());
+	} else {
+		return new URL(getDomainWithProtocol().toString() + '/' + source.type + '/' + source.name);
+	}
 }
 
 export class IndexEntry {
-    key: string = '';
-    value: ReferenceSource[] = new Array<ReferenceSource>();
+	key: string = '';
+	value: ReferenceSource[] = new Array<ReferenceSource>();
 }
 
 export class ReferenceSourceIndex {
-    private index: IndexEntry[] = new Array<IndexEntry>();
+	index: IndexEntry[] = new Array<IndexEntry>();
 
-    getIndex(): readonly IndexEntry[] {
-        return this.index;
-    }
+	getIndex(): readonly IndexEntry[] {
+		return this.index;
+	}
 
-    addEntry(name: string, source: ReferenceSource) {
-        for (let entry of this.index) {
-            if (entry.key === name) {
-                for (let value of entry.value) {
-                    if (value === source) {
-                        return;
-                    }
-                }
-                entry.value.push(source);
-                return;
-            }
-        }
-        const entry = new IndexEntry();
-        entry.key = name;
-        entry.value.push(source);
-        this.index.push(entry);
-    }
+	addEntry(name: string, source: ReferenceSource) {
+		for (const entry of this.index) {
+			if (entry.key === name) {
+				for (let value of entry.value) {
+					if (equals(value, source)) {
+						return;
+					}
+				}
+				entry.value.push(source);
+				return;
+			}
+		}
+		const entry = new IndexEntry();
+		entry.key = name;
+		entry.value.push(source);
+		this.index.push(entry);
+	}
 }
+
+export type ReferenceData = { [key: string]: ReferenceSource[] };

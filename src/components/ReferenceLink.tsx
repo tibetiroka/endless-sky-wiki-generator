@@ -8,42 +8,13 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-.logo {
-    aspect-ratio: 1;
-    max-width: 50px;
-    padding: 5px 0 5px 5px;
+import {toURL} from "../data/ReferenceSource.ts";
+import {ObjectData} from "../data/ObjectData.tsx";
+
+type ReferenceLinkProps = { data: ObjectData };
+
+function ReferenceLink(props: ReferenceLinkProps) {
+	return <a href={toURL(props.data.getSource()).toString()}>{props.data.displayName}</a>;
 }
 
-.navbar {
-    margin-top: 0;
-    padding-top: 0;
-}
-
-.navbar > * {
-    margin-left: 5px;
-    margin-right: 5px;
-    padding-right: 0px;
-    padding-left: 0px;
-}
-
-.navbar div {
-    width: fit-content;
-}
-
-figure figcaption {
-    font-style: italic;
-    font-size: smaller;
-}
-
-main {
-    min-height: 90vh;
-}
-
-footer {
-    margin-top: auto;
-    margin-bottom: 0;
-}
-
-footer * {
-    text-align: center;
-}
+export default ReferenceLink;

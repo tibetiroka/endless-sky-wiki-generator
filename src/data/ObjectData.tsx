@@ -1,34 +1,49 @@
 import {CommitData} from "./CommitData";
+import {ReferenceSource} from "./ReferenceSource.ts";
+
+export type DataType = {
+	filename: string,
+	line: number,
+	data: any,
+	removed?: CommitData,
+	lastCommit?: string
+};
 
 export class ObjectData {
-    // core data
-    type: string;
-    name: string;
-    data: any;
-    // commonly used properties
-    displayName: string;
+	// core data
+	id: ReferenceSource;
+	data: DataType;
+	// commonly used properties
+	displayName: string;
 
-    constructor(type: string, name: string, data: any) {
-        this.type = type;
-        this.name = name;
-        this.data = data;
-        //
-        this.displayName = data.data['display name'] ?? data.data['name'] ?? this.name;
-    }
+	constructor(id: ReferenceSource, data: DataType) {
+		this.id = id;
+		this.data = data;
+		//
+		this.displayName = data.data['display name'] ?? data.data['name'] ?? this.id.name;
+	}
 
-    getLocation(): { filename: string, line: number } {
-        return {"filename": this.data.filename, "line": this.data.line};
-    }
+	getSource(): ReferenceSource {
+		return this.id;
+	}
 
-    isRemoved(): boolean {
-        return this.data.removed == null; // also checks undefined
-    }
+	getData(): any {
+		return this.data.data;
+	}
 
-    getRemovedCommit(): CommitData | null {
-        return this.data.removed as CommitData;
-    }
+	getLocation(): { filename: string, line: number } {
+		return {"filename": this.data.filename, "line": this.data.line};
+	}
 
-    getLastCommit(): String | null {
-        return this.data.lastCommit;
-    }
+	isRemoved(): boolean {
+		return !!this.data.removed;
+	}
+
+	getRemovedCommit(): CommitData | undefined {
+		return this.data.removed;
+	}
+
+	getLastCommit(): string | undefined {
+		return this.data.lastCommit;
+	}
 }

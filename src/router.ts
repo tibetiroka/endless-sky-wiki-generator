@@ -8,13 +8,13 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {getPath} from './utils.ts';
+import {getPath} from './web_utils.ts';
 
 export const PATH = getPath();
 
 let pathParts = PATH.split('/');
 if (pathParts.length === 0) {
-    pathParts = Array('main');
+	pathParts = Array('main');
 }
 
 let contentType = pathParts[0];

@@ -1,0 +1,139 @@
+/*
+ * Copyright (c) 2025 by tibetiroka.
+ *
+ * endless-sky-wiki-generator is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * endless-sky-wiki-generator is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* header */
+.logo {
+	aspect-ratio: 1;
+	max-width: 50px;
+	padding: 5px 0 5px 5px;
+}
+
+.navbar {
+	margin-top: 0;
+	padding-top: 0;
+}
+
+.navbar > div > * {
+	margin-left: 5px;
+	margin-right: 5px;
+	padding-right: 0px;
+	padding-left: 0px;
+}
+
+.navbar form {
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+/* content */
+figure figcaption {
+	font-style: italic;
+	font-size: smaller;
+}
+
+main {
+	min-height: 85vh;
+	margin-bottom: 20px;
+}
+
+main a {
+	text-decoration: none;
+}
+
+h2 {
+	border-bottom: solid 1px;
+	border-color: grey;
+	padding-top: 10px;
+}
+
+.changelog>* {
+	margin-left: 10px;
+	margin-top: 5px;
+}
+
+.changelog>*:not(p)>* {
+	margin-left: 10px;
+}
+
+.diff-container {
+	width: 100%;
+	margin: 5px;
+	margin-left: 20px;
+	table-layout: fixed;
+	border-collapse: collapse;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+	font-family: monospace;
+}
+
+.diff-container td {
+	word-wrap: anywhere;
+}
+
+.diff-container pre {
+	padding-bottom: 0;
+	margin-bottom: 0;
+}
+
+/* footer */
+footer {
+	margin-top: auto;
+	margin-bottom: 0;
+	border-top: solid 1px;
+}
+
+footer * {
+	text-align: center;
+}
+
+/* search box */
+.autocomplete-container {
+	position: relative;
+	width: 100%;
+	margin: 0 10px 0 0;
+}
+
+.autocomplete-input {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	font-size: 16px;
+	outline: none;
+}
+
+.autocomplete-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	border: 1px solid #ccc;
+	border-top: none;
+	border-radius: 5px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	z-index: 1000;
+}
+
+.autocomplete-suggestions:empty {
+	border: none
+}
+
+.autocomplete-suggestion {
+	padding: 10px;
+	cursor: pointer;
+}
+
+.autocomplete-suggestion:hover {
+	text-decoration: underline;
+	filter: brightness(70%) contrast(150%);
+}
