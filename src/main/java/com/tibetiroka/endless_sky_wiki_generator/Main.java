@@ -29,8 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -108,6 +107,7 @@ public class Main {
 		Map<RevCommit, Integer> commitIndices = new HashMap<>();
 		try(RevWalk revWalk = new RevWalk(git.getRepository())) {
 			revWalk.sort(RevSort.TOPO_KEEP_BRANCH_TOGETHER);
+			revWalk.setFirstParent(true);
 			revWalk.markStart(revWalk.parseCommit(git.getRepository().resolve(Constants.HEAD)));
 			List<RevCommit> allCommits = new ArrayList<>();
 			revWalk.iterator().forEachRemaining(allCommits::add);
@@ -115,31 +115,39 @@ public class Main {
 				commitIndices.put(allCommits.get(i), i);
 			}
 		}
-		commits.sort(Comparator.comparingInt(commitIndices::get).reversed());
+		commits = commits.stream()
+		                 .filter(commitIndices::containsKey)
+		                 .sorted(Comparator.comparingInt(commitIndices::get).reversed())
+		                 .toList();
 		return commits;
 	}
 
-	private static @NotNull List<@NotNull DataNode> parse(@NotNull File baseDir) throws IOException {
-		try(Stream<Path> paths = Files.walk(baseDir.toPath())) {
-			return paths.parallel()
-			            .filter(p -> p.toFile().isFile())
-			            .mapMulti((Path path, Consumer<DataNode> mapper) -> {
-				            try {
-					            ListIterator<String> textIt = Files.readAllLines(path, StandardCharsets.ISO_8859_1).listIterator();
-					            String filename = baseDir.toPath().relativize(path).toString();
-					            while(textIt.hasNext()) {
-						            int lineNumber = textIt.nextIndex() + 1;
-						            DataNode node = new DataNode(textIt);
-						            node.setFilePos(filename, lineNumber);
-						            mapper.accept(node);
+	private static @NotNull List<@NotNull DataNode> parse(@NotNull File baseDir) throws IOException, InterruptedException, ExecutionException {
+		ExecutorService virtualPool = Executors.newVirtualThreadPerTaskExecutor();
+		Future<List<DataNode>> result = virtualPool.submit(() -> {
+			try(Stream<Path> paths = Files.walk(baseDir.toPath())) {
+				return paths.parallel()
+				            .filter(p -> p.toFile().isFile())
+				            .mapMulti((Path path, Consumer<DataNode> mapper) -> {
+					            try {
+						            ListIterator<String> textIt = Files.readAllLines(path, StandardCharsets.ISO_8859_1).listIterator();
+						            String filename = baseDir.toPath().relativize(path).toString();
+						            while(textIt.hasNext()) {
+							            int lineNumber = textIt.nextIndex() + 1;
+							            DataNode node = new DataNode(textIt);
+							            node.setFilePos(filename, lineNumber);
+							            mapper.accept(node);
+						            }
+					            } catch(IOException e) {
+						            throw new RuntimeException(e);
 					            }
-				            } catch(IOException e) {
-					            throw new RuntimeException(e);
-				            }
-			            })
-			            .filter(node -> !node.isEmpty())
-			            .toList();
-		}
+				            })
+				            .filter(node -> !node.isEmpty())
+				            .toList();
+			}
+		});
+		virtualPool.shutdown();
+		return result.get();
 	}
 
 	private static final class Config {
