@@ -22,7 +22,6 @@ import com.tibetiroka.endless_sky_wiki_generator.Tokenizer.IndentLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -176,10 +175,24 @@ public final class DataManager {
 	private void saveValues(@NotNull DataNode node, @NotNull JsonObject json) {
 		if(node.getValues().isEmpty())
 			return;
-		json.addProperty("name", node.getValues().getLast());
-		if(node.getValues().size() == 2) {
-			// base name and variant name
-			json.addProperty("base", node.getValues().getFirst());
+		switch(node.getKey()) {
+			case "ship": {
+				json.addProperty("name", node.getValues().getLast());
+				if(node.getValues().size() == 2) {
+					// base name and variant name
+					json.addProperty("base", node.getValues().getFirst());
+				}
+				break;
+			}
+			case null:
+			default: {
+				json.addProperty("name", node.getValues().getFirst());
+				if(node.getValues().size() > 1) {
+					JsonArray array = new JsonArray();
+					node.getValues().subList(1, node.getValues().size()).forEach(array::add);
+					json.add("values", array);
+				}
+			}
 		}
 	}
 

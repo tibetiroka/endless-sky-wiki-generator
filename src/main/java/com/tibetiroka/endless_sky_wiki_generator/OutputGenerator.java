@@ -37,7 +37,6 @@ public class OutputGenerator {
 		outputs.put("category", new OutputBuffer());
 		outputs.put("fleet", new OutputBuffer());
 		outputs.put("government", new OutputBuffer());
-		outputs.put("license", new OutputBuffer());
 		outputs.put("minable", new OutputBuffer());
 	}
 
