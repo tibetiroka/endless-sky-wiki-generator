@@ -7,9 +7,16 @@
  *
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-import {ReferenceSource, toURL} from "./data/ReferenceSource.ts";
+import {isMultiPart, ReferenceSource, toURL} from "./data/ReferenceSource.ts";
 import React, {ReactElement, useState} from "react";
-import {getChangelog, getCommitURL, getData, getInteractiveFileURL, getReferences} from "./data/DataFetcher.tsx";
+import {
+	getChangelog,
+	getCommitURL,
+	getData,
+	getDisplayName,
+	getInteractiveFileURL,
+	getReferences
+} from "./data/DataFetcher.tsx";
 import {ObjectData} from './data/ObjectData.tsx'
 import {Navigate} from "react-router";
 import {findSource} from "./utils.ts";
@@ -66,20 +73,16 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 		if (title) {
 			setHeading(<h1 className="text-dark">{title}</h1>);
 		} else {
-			if (source.type === 'category') {
-				setHeading(<h1>{source.name}</h1>);
-			} else {
-				getData(source).then(value => {
-					setHeading(
-						<>
-							<h1>{value.displayName}</h1>
-							{value.displayName === value.getSource().name ? <></>
-								: <small style={{fontStyle: "italic"}}>Internally: {value.getSource().name}</small>}
-						</>);
-				}).catch(() => {
-					setHeading(<Navigate to={{pathname: '/'}}/>);
-				});
-			}
+			getDisplayName(source).then(displayName => {
+				setHeading(
+					<>
+						<h1>{displayName}</h1>
+						{displayName === source.name ? <></>
+							: <small style={{fontStyle: "italic"}}>Internally: {source.name}</small>}
+					</>);
+			}).catch(() => {
+				setHeading(<Navigate to={{pathname: '/'}}/>);
+			});
 		}
 	}
 
@@ -97,8 +100,8 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 	}
 
 	let stubNotice: ReactElement | undefined = undefined;
-	const stubTypes: string[] = ["system", "government", "minable", "category"];
-	if (!title && stubTypes.includes(source.type)) {
+	const stubTypes: string[] = ["system", "government", "minable"];
+	if (!title && (stubTypes.includes(source.type) || isMultiPart(source))) {
 		stubNotice = <Alert variant="warning">
 			This article is automatically generated and is a stub. You can read about how to expand it <a href='/'>here: todo</a>.
 		</Alert>

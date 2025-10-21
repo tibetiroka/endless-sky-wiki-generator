@@ -1,5 +1,5 @@
 import {ObjectData} from "./ObjectData";
-import {ReferenceData, ReferenceSource} from "./ReferenceSource.ts";
+import {getParts, ReferenceData, ReferenceSource} from "./ReferenceSource.ts";
 import {fetchData} from "../web_utils.ts";
 import {ChangeData} from "./ChangeData.tsx";
 import {findSource} from "../utils.ts";
@@ -13,6 +13,11 @@ const ES_DEFAULT_INTERACTIVE_REF: string = "master";
 const DATA_CACHE = new Map<ReferenceSource, Promise<ObjectData>>();
 const CHANGELOG_CACHE = new Map<ReferenceSource, Promise<ChangeData[]>>();
 
+type DisplayNameData = { [U: string]: ReferenceSource[] };
+let DISPLAY_NAME_CACHE: Promise<DisplayNameData> =
+	fetchData('index/entries/display name', 1000 * 60 * 60 * 24)
+		.then(json => JSON.parse(json) as DisplayNameData);
+
 export function getData(source: ReferenceSource): Promise<ObjectData> {
 	// example: <ROOT>/data/ship/data/Argosy
 	const cacheKey: ReferenceSource | null = findSource(source, DATA_CACHE.keys());
@@ -20,7 +25,7 @@ export function getData(source: ReferenceSource): Promise<ObjectData> {
 		// data is cached
 		return DATA_CACHE.get(cacheKey) as Promise<ObjectData>;
 	}
-	const promise: Promise<ObjectData> = fetchData('data/' + source.type + '/data/' + source.name)
+	const promise: Promise<ObjectData> = fetchData('data/' + getParts(source)[0] + '/data/' + getParts(source)[1])
 		.then(json => JSON.parse(json))
 		.then(json => {
 			const data: ObjectData = new ObjectData(source, json);
@@ -37,7 +42,7 @@ export function getChangelog(source: ReferenceSource): Promise<ChangeData[]> {
 		// data is cached
 		return CHANGELOG_CACHE.get(cacheKey) as Promise<ChangeData[]>;
 	}
-	const promise: Promise<ChangeData[]> = fetchData('data/' + source.type + '/changelog/' + source.name)
+	const promise: Promise<ChangeData[]> = fetchData('data/' + getParts(source)[0] + '/data/' + getParts(source)[1])
 		.then(json => JSON.parse(json))
 		.then(json => {
 			const changelog = json as ChangeData[];
@@ -45,6 +50,17 @@ export function getChangelog(source: ReferenceSource): Promise<ChangeData[]> {
 		});
 	CHANGELOG_CACHE.set(source, promise);
 	return promise;
+}
+
+export function getDisplayName(source: ReferenceSource): Promise<string> {
+	return DISPLAY_NAME_CACHE.then(cache => {
+		for (const [key, value] of Object.entries(cache)) {
+			if (findSource(source, value) !== null) {
+				return Promise.resolve(key);
+			}
+		}
+		return Promise.resolve(source.name as string);
+	})
 }
 
 export function getReferences(category: string): Promise<ReferenceData> {

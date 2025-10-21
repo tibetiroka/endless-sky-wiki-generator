@@ -71,7 +71,6 @@ export function fetchData(path: string, cacheLifeMs: number = 1000 * 60 * 60 * 5
 			if (cacheData !== null && cacheData !== '') {
 				return Promise.resolve(cacheData);
 			} else {
-				console.log('invalid');
 				return Promise.reject('Cached data is marked as invalid');
 			}
 		}

@@ -21,11 +21,23 @@ export class ReferenceSource {
 	}
 }
 
+export function isMultiPart(source: ReferenceSource): boolean {
+	return source.type.includes('\\');
+}
+
+export function getParts(source: ReferenceSource): string[] {
+	if (isMultiPart(source)) {
+		return [source.type.substring(0, source.type.indexOf('\\')), source.type.substring(source.type.indexOf('\\') + 1)]
+	} else {
+		return [source.type, source.name as string];
+	}
+}
+
 export function toURL(source: ReferenceSource): URL {
 	if (source.name === null) {
 		return new URL(source.type, getDomainWithProtocol());
 	} else {
-		return new URL(getDomainWithProtocol().toString() + '/' + source.type + '/' + source.name);
+		return new URL(getDomainWithProtocol().toString() + '/' + encodeURIComponent(source.type) + '/' + encodeURIComponent(source.name));
 	}
 }
 
