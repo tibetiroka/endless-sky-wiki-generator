@@ -67,7 +67,7 @@ public class Main implements Callable<Integer> {
 				for(File file : files) {
 					Gson gson = new Gson();
 					try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
-						parseJson(gson.fromJson(reader, HashMap.class), node.getName(), indices);
+						parseJson(gson.fromJson(reader, HashMap.class), node.getName(), indices, file.getName());
 					}
 				}
 			}
@@ -113,9 +113,8 @@ public class Main implements Callable<Integer> {
 		indices.get(topLevel).addReference(entry, source);
 	}
 
-	private void parseJson(HashMap<String, ?> map, String topLevel, Map<String, Index<String>> indices) {
+	private void parseJson(HashMap<String, ?> map, String topLevel, Map<String, Index<String>> indices, String fileName) {
 		Map<String, ?> data = (Map<String, ?>) map.get("data");
-		String name = (String) ((data).get("name"));
 
 		if(requiredChildren.containsKey(topLevel)) {
 			for(String key : requiredChildren.get(topLevel)) {
@@ -125,24 +124,28 @@ public class Main implements Callable<Integer> {
 			}
 		}
 
-		indices.computeIfAbsent(topLevel, Index::new);
-		indices.get(topLevel).addEntry(name);
-		ReferenceSource source = new ReferenceSource(topLevel, name);
+		ReferenceSource source = null;
+		String name;
+		if(topLevel.equals("category")) {
+			name = fileName;
+			indices.computeIfAbsent(topLevel + '\\' + name, Index::new);
+		} else {
+			indices.computeIfAbsent(topLevel, Index::new);
+			name = (String) ((data).get("name"));
+			indices.get(topLevel).addEntry(name);
+			source = new ReferenceSource(topLevel, name);
 
-		String plural = (String) data.get("plural");
-		if(plural != null) {
-			indices.get(topLevel).addEntry(name, plural);
-		}
-		String displayName = (String) data.get("display name");
-		if(displayName != null) {
-			indices.get(topLevel).addEntry(name, displayName);
+			String displayName = (String) data.get("display name");
+			if(displayName != null) {
+				indices.get(topLevel).addEntry(name, displayName);
+			}
 		}
 
 		switch(topLevel) {
 			case "outfit" -> {
 				String category = (String) data.get("category");
 				if(category != null) {
-					addReference(indices, "category", category, source);
+					addReference(indices, "category\\outfit", category, source);
 				}
 				Object licenses = data.get("licenses");
 				if(licenses instanceof Map<?, ?> licenseMap) {
@@ -154,7 +157,7 @@ public class Main implements Callable<Integer> {
 				}
 				String series = (String) data.get("series");
 				if(series != null) {
-					addReference(indices, "series", series, source);
+					addReference(indices, "category\\series", series, source);
 				}
 				Map<String, ?> weapon = (Map<String, ?>) data.get("weapon");
 				if(weapon != null) {
@@ -203,7 +206,7 @@ public class Main implements Callable<Integer> {
 				if(attributes != null) {
 					String category = (String) attributes.get("category");
 					if(category != null) {
-						addReference(indices, "category", category, source);
+						addReference(indices, "category\\ship", category, source);
 					}
 					Map<String, ?> licenses = (Map<String, ?>) attributes.get("licenses");
 					if(licenses != null) {
@@ -217,6 +220,10 @@ public class Main implements Callable<Integer> {
 					for(String outfit : outfits.keySet()) {
 						addReference(indices, "outfit", outfit, source);
 					}
+				}
+				String series = (String) data.get("series");
+				if(series != null) {
+					addReference(indices, "category\\series", series, source);
 				}
 			}
 			case "shipyard" -> {
@@ -260,6 +267,13 @@ public class Main implements Callable<Integer> {
 						addReference(indices, "fleet", ((Map<String, String>) o).get("base"), source);
 					}
 				}
+			}
+			case "category" -> {
+				data.keySet().forEach(key -> {
+					if(!key.equals("name")) {
+						indices.get(topLevel + '\\' + name).addEntry(key);
+					}
+				});
 			}
 		}
 	}
