@@ -98,19 +98,43 @@ public class Main implements Callable<Integer> {
 			stringIndex.saveReferences(referenceOutput);
 		}
 
-		Index<ReferenceSource> everything = new Index<>("everything");
-		indices.values().forEach(index -> index.getEntries().forEach((key, values) -> {
-			ReferenceSource source = new ReferenceSource(index.getTopLevelNode(), key);
-			everything.addEntry(key, source);
-			values.forEach(value -> everything.addEntry(value, source));
-		}));
-		everything.saveEntries(entryOutput);
+		{
+			Index<ReferenceSource> everything = new Index<>("everything");
+			indices.values().forEach(index -> index.getEntries().forEach((key, values) -> {
+				ReferenceSource source = new ReferenceSource(index.getTopLevelNode(), key);
+				everything.addEntry(key, source);
+				values.forEach(value -> everything.addEntry(value, source));
+			}));
+			everything.saveEntries(entryOutput);
+		}
+		{
+			Index<ReferenceSource> displayNames = new Index<>("display name");
+			indices.values().forEach(index -> index.getEntries().forEach((key, values) -> {
+				ReferenceSource source = new ReferenceSource(index.getTopLevelNode(), key);
+				if(values.isEmpty()) {
+					displayNames.addEntry(key, source);
+				} else {
+					displayNames.addEntry(values.stream().findAny().get(), source);
+				}
+			}));
+			displayNames.saveEntries(entryOutput);
+		}
+
 		return 0;
 	}
 
 	private void addReference(Map<String, Index<String>> indices, String topLevel, String entry, ReferenceSource source) {
 		indices.computeIfAbsent(topLevel, Index::new);
 		indices.get(topLevel).addReference(entry, source);
+	}
+
+	private void addShopReferences(Map<String, Index<String>> indices, String topLevel, ReferenceSource source, Map<String, ?> data) {
+		// todo: something with location filters, stock and other magic
+		for(String s : data.keySet()) {
+			if(!s.equals("name") && !s.equals("to sell") && !s.equals("location") && !s.equals("remove")) {
+				addReference(indices, topLevel.equals("shipyard") ? "ship" : "outfit", s, source);
+			}
+		}
 	}
 
 	private void parseJson(HashMap<String, ?> map, String topLevel, Map<String, Index<String>> indices, String fileName) {
@@ -124,11 +148,12 @@ public class Main implements Callable<Integer> {
 			}
 		}
 
-		ReferenceSource source = null;
+		ReferenceSource source;
 		String name;
 		if(topLevel.equals("category")) {
 			name = fileName;
 			indices.computeIfAbsent(topLevel + '\\' + name, Index::new);
+			source = null;
 		} else {
 			indices.computeIfAbsent(topLevel, Index::new);
 			name = (String) ((data).get("name"));
@@ -165,20 +190,14 @@ public class Main implements Callable<Integer> {
 					if(ammo instanceof String s) {
 						addReference(indices, "outfit", s, source);
 					} else if(ammo instanceof Map m) {
-						String base = (String) m.get("base");
-						if(base != null) {
-							addReference(indices, "outfit", base, source);
+						String ammoName = (String) m.get("name");
+						if(ammoName != null) {
+							addReference(indices, "outfit", ammoName, source);
 						}
 					}
 				}
 			}
-			case "outfitter" -> {
-				for(String s : data.keySet()) {
-					if(!s.equals("name")) {
-						addReference(indices, "outfit", s, source);
-					}
-				}
-			}
+			case "outfitter", "shipyard" -> addShopReferences(indices, topLevel, source, data);
 			case "planet" -> {
 				Object outfitters = data.get("outfitter");
 				if(outfitters instanceof String s) {
@@ -225,11 +244,15 @@ public class Main implements Callable<Integer> {
 				if(series != null) {
 					addReference(indices, "category\\series", series, source);
 				}
-			}
-			case "shipyard" -> {
-				for(String s : data.keySet()) {
-					if(!s.equals("name")) {
-						addReference(indices, "ship", s, source);
+				Object bays = data.get("bay");
+				if(bays != null) {
+					if(!(bays instanceof List<?>)) {
+						bays = List.of(bays);
+					}
+					for(Object bay : ((List<?>) bays)) {
+						if(bay instanceof Map<?, ?> bayMap) {
+							addReference(indices, "category\\bay type", (String) bayMap.get("name"), source);
+						}
 					}
 				}
 			}
@@ -258,13 +281,13 @@ public class Main implements Callable<Integer> {
 				}
 				Object fleets = data.get("fleet");
 				if(fleets instanceof Map fleet) {
-					String base = (String) fleet.get("base");
-					if(base != null) {
-						addReference(indices, "fleet", base, source);
+					String fleetName = (String) fleet.get("name");
+					if(fleetName != null) {
+						addReference(indices, "fleet", fleetName, source);
 					}
 				} else if(fleets instanceof List<?> fleetList) {
 					for(Object o : fleetList) {
-						addReference(indices, "fleet", ((Map<String, String>) o).get("base"), source);
+						addReference(indices, "fleet", ((Map<String, String>) o).get("name"), source);
 					}
 				}
 			}
