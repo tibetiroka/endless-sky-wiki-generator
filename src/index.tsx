@@ -4,7 +4,7 @@ import './style.css'
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import SharedLayout from "./SharedLayout";
+import SharedLayout, {updateDarkMode} from "./SharedLayout";
 import {BrowserRouter, Navigate, Route, Routes} from "react-router";
 import Home from "./Home";
 import Changelog from "./Changelog";
@@ -32,14 +32,34 @@ domRoot.render(
 	</React.StrictMode>
 );
 
-document.addEventListener('click', e=> {
+function awaitElement(selector: any) {
+	return new Promise(resolve => {
+		if (document.querySelector(selector)) {
+			return resolve(document.querySelector(selector));
+		}
+		const observer = new MutationObserver(_ => {
+			if (document.querySelector(selector)) {
+				observer.disconnect();
+				resolve(document.querySelector(selector));
+			}
+		});
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
+	});
+}
+
+awaitElement('#darkModeToggle').then(() => updateDarkMode());
+
+document.addEventListener('click', e => {
 	// @ts-ignore
-	if(e.target.matches("a *") || e.target.matches("a")){
+	if (e.target.matches("a *") || e.target.matches("a")) {
 		// @ts-ignore
 		const target = e.target.closest("a");
 		const link = target.href;
-		if(link) {
-			if(!isOfficial(link)) {
+		if (link) {
+			if (!isOfficial(link)) {
 				target.target = "_blank";
 			}
 		}

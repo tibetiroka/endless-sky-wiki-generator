@@ -12,20 +12,24 @@ function Logo() {
 }
 
 export function updateDarkMode() {
+	console.log("update");
 	const body = document.getElementById('body');
 	const icon = document.getElementById('darkModeToggleIcon');
 	const button = document.getElementById('darkModeToggle');
 	if (body === null || icon === null || button === null) {
+		console.log('too early');
 		return;
 	}
 	if (localStorage.getItem('isDarkMode') === 'true') {
 		body.setAttribute('data-bs-theme', 'dark');
 		icon.classList.remove('bi-sun');
 		icon.classList.add('bi-moon');
+		(button as any).checked = true;
 	} else if (localStorage.getItem('isDarkMode') === 'false') {
 		body.setAttribute('data-bs-theme', 'light');
 		icon.classList.add('bi-sun');
 		icon.classList.remove('bi-moon');
+		(button as any).checked = false;
 	}
 }
 

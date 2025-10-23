@@ -42,7 +42,7 @@ export function getChangelog(source: ReferenceSource): Promise<ChangeData[]> {
 		// data is cached
 		return CHANGELOG_CACHE.get(cacheKey) as Promise<ChangeData[]>;
 	}
-	const promise: Promise<ChangeData[]> = fetchData('data/' + getParts(source)[0] + '/data/' + getParts(source)[1])
+	const promise: Promise<ChangeData[]> = fetchData('data/' + getParts(source)[0] + '/changelog/' + getParts(source)[1])
 		.then(json => JSON.parse(json))
 		.then(json => {
 			const changelog = json as ChangeData[];
