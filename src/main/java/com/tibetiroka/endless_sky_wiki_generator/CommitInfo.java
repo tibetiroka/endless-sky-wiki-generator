@@ -21,7 +21,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public final class CommitInfo {
+public final class CommitInfo implements Comparable<CommitInfo> {
 	private final String author;
 	private final String hash;
 	private final String message;
@@ -41,6 +41,11 @@ public final class CommitInfo {
 		          .stream()
 		          .filter(e -> e.getValue() >= commitTime)
 		          .min(Comparator.comparingInt(Entry::getValue)).get().getKey().getName();
+	}
+
+	@Override
+	public int compareTo(@NotNull CommitInfo o) {
+		return time.compareTo(o.time);
 	}
 
 	public @NotNull String getParent() {

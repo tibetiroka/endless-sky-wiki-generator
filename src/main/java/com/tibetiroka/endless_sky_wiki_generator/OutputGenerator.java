@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public class OutputGenerator {
 	private final Map<String, OutputBuffer> outputs;
@@ -73,12 +74,35 @@ public class OutputGenerator {
 			       OutputBuffer output = outputs.get(key);
 			       output.save(data, new File(saveDir, key));
 		       });
+		OutputBuffer.saveSharedChangelog(saveDir);
 	}
 
 	private static final class OutputBuffer {
+		private static final TreeMap<CommitInfo, JsonArray> sharedGlobalChangelog = new TreeMap<>();
 		private final HashMap<String, JsonArray> changelogs = new HashMap<>();
 		private final JsonArray globalChangelog = new JsonArray();
 		private final HashMap<String, JsonElement> removed = new HashMap<>();
+
+		public static void saveSharedChangelog(@NotNull File saveDir) {
+			JsonArray array = new JsonArray(sharedGlobalChangelog.size());
+			sharedGlobalChangelog.forEach((commit, diff) -> {
+				JsonObject diffObject = new JsonObject();
+				diffObject.add("diff", diff);
+				diffObject.add("commit", commit.toJson());
+				array.add(diffObject);
+			});
+			save(array, new File(saveDir, "changelog.json"));
+		}
+
+		private static void save(@NotNull JsonElement data, @NotNull File file) {
+			file.getParentFile().mkdirs();
+			try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+				Gson gson = new GsonBuilder().setFormattingStyle(FormattingStyle.PRETTY).create();
+				gson.toJson(data, writer);
+			} catch(IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
 		public void addDiff(@NotNull JsonObject diff, @NotNull CommitInfo commit) {
 			if(!diff.isEmpty()) {
@@ -86,6 +110,12 @@ public class OutputGenerator {
 				diffObject.add("diff", diff);
 				diffObject.add("commit", commit.toJson());
 				globalChangelog.add(diffObject);
+				synchronized(OutputBuffer.class) {
+					sharedGlobalChangelog.putIfAbsent(commit, new JsonArray());
+					for(String s : diff.keySet()) {
+						sharedGlobalChangelog.lastEntry().getValue().add(diff.get(s));
+					}
+				}
 
 				for(String s : diff.keySet()) {
 					changelogs.putIfAbsent(s, new JsonArray());
@@ -113,16 +143,6 @@ public class OutputGenerator {
 			JsonObject data = newData.toJson();
 			for(String key : data.keySet()) {
 				save(data.get(key), new File(dataDir, key));
-			}
-		}
-
-		private void save(@NotNull JsonElement data, @NotNull File file) {
-			file.getParentFile().mkdirs();
-			try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-				Gson gson = new GsonBuilder().setFormattingStyle(FormattingStyle.PRETTY).create();
-				gson.toJson(data, writer);
-			} catch(IOException e) {
-				throw new RuntimeException(e);
 			}
 		}
 	}
