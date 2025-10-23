@@ -19,11 +19,10 @@ import picocli.CommandLine.Parameters;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Main implements Callable<Integer> {
 	@Parameters(index = "0", description = "The directory where the auto-generated JSON files are located.")
@@ -255,6 +254,10 @@ public class Main implements Callable<Integer> {
 						}
 					}
 				}
+				String base = (String) data.get("base");
+				if(base != null) {
+					addReference(indices, "ship", base, source);
+				}
 			}
 			case "system" -> {
 				String government = (String) data.get("government");
@@ -269,15 +272,33 @@ public class Main implements Callable<Integer> {
 						addReference(indices, "system", (String) o, source);
 					}
 				}
-				Map<String, ?> objects = (Map<String, ?>) data.get("objects");
-				if(objects != null) {
-					for(Object value : objects.values()) {
-						if(value instanceof Map object) {
-							if(object.containsKey("name")) {
-								addReference(indices, "planet", (String) object.get("name"), source);
+
+				Object objects = data.get("object");
+				Set<String> objectList = new Function<Object, Set<String>>() {
+					@Override
+					public Set<String> apply(Object o) {
+						Set<String> names = new HashSet<>();
+						if(o == null) {
+							return names;
+						}
+						if(o instanceof Map<?,?> map) {
+							if(map.get("name") != null) {
+								names.add((String) map.get("name"));
+							}
+							if(map.get("object") != null) {
+								names.addAll(apply(map.get("object")));
 							}
 						}
+						if(o instanceof List<?> list) {
+							for(Object object : list) {
+								names.addAll(apply(object));
+							}
+						}
+						return names;
 					}
+				}.apply(objects);
+				for(String s : objectList) {
+					addReference(indices, "planet", s, source);
 				}
 				Object fleets = data.get("fleet");
 				if(fleets instanceof Map fleet) {
@@ -288,6 +309,15 @@ public class Main implements Callable<Integer> {
 				} else if(fleets instanceof List<?> fleetList) {
 					for(Object o : fleetList) {
 						addReference(indices, "fleet", ((Map<String, String>) o).get("name"), source);
+					}
+				}
+				Object minables = data.get("minables");
+				if(minables != null) {
+					if(!(minables instanceof List)) {
+						minables = List.of(minables);
+					}
+					for(Object minable : ((List<?>) minables)) {
+						addReference(indices, "minable", ((Map<String, String>) minable).get("name"), source);
 					}
 				}
 			}
