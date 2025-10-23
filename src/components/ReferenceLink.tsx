@@ -13,7 +13,6 @@ import {useState} from "react";
 import {getData, getDisplayName, getReferences} from "../data/DataFetcher.tsx";
 import {findSource} from "../utils.ts";
 
-//todo: remove 'data'
 type ReferenceLinkProps = { source: ReferenceSource, displayName: string, count?: number };
 
 export function ReferenceLink(props: ReferenceLinkProps) {

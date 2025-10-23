@@ -1,7 +1,9 @@
 import {ReactElement, useState} from "react";
-import {ChangeData} from "data/ChangeData.tsx";
+import {BulkChangeData} from "data/ChangeData.tsx";
 import {fetchData} from "web_utils.ts";
 import {Changelog} from "./components/Changelog.tsx";
+// @ts-ignore
+import banner from "./banner.png"
 
 function Home() {
 	const [changelog, setChangelog] = useState(undefined as ReactElement | undefined);
@@ -10,9 +12,9 @@ function Home() {
 		fetchData('data/changelog.json', 0)
 			.then(json => JSON.parse(json))
 			.then(data => {
-				let changelog = data as ChangeData[];
-				changelog = changelog.splice(0, changelog.length - 20);
-				setChangelog(<Changelog entries={changelog.toReversed()}/>)
+				let changelog = data as BulkChangeData[];
+				changelog = changelog.toSpliced(0, changelog.length - 20);
+				setChangelog(<Changelog entries={changelog.toReversed()}/>);
 			});
 	}
 
@@ -20,6 +22,7 @@ function Home() {
 		<h1>Home</h1>
 		<section>
 			<h2>Welcome to the Endless Sky Wiki!</h2>
+			<img src={banner} alt='banner' loading='lazy' className='d-none d-md-block banner'/>
 			<p>Endless Sky is a 2D top-down sandbox style space exploration game inspired by <a href="https://en.wikipedia.org/wiki/Escape_Velocity_(video_game)">Escape Velocity</a>.
 			</p>
 			<p>Start out as the captain of a tiny spaceship and choose what to do to work your way up from there. Explore other star systems. Earn money by trading, carrying passengers, or completing missions. Use your earnings to buy a better ship or to upgrade the weapons and engines on your current one. Take sides in a civil war or leave human space behind and hope to find some friendly aliens. There are several different storylines, both major and minor, covering human and alien space and more missions are added in every update.</p>
@@ -31,7 +34,7 @@ function Home() {
 			<p>See the <a href="https://discord.gg/du27FkN5jy">ES Wikia Discord</a> if you want to talk about the wiki.
 			</p>
 		</section>
-		<section>
+		<section className='home-changelog'>
 			<h2>Recent game activity</h2>
 			{changelog}
 		</section>

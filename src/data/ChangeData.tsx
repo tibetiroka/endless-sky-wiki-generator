@@ -10,3 +10,8 @@ export class ChangeData {
 	diff: DiffData = new DiffData();
 	commit: CommitData = new CommitData();
 }
+
+export class BulkChangeData {
+	diff: DiffData[] = [];
+	commit: CommitData = new CommitData();
+}

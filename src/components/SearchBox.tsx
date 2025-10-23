@@ -9,15 +9,7 @@
  */
 
 import {useEffect, useState} from "react";
-import {
-	getParts,
-	IndexEntry,
-	isMultiPart,
-	ReferenceSource,
-	ReferenceSourceIndex,
-	toURL,
-	typeToString
-} from "../data/ReferenceSource.ts";
+import {IndexEntry, ReferenceSource, ReferenceSourceIndex, toURL, typeToString} from "../data/ReferenceSource.ts";
 import Fuse from "fuse.js";
 import {fetchData} from "../web_utils.ts";
 import {equals} from "../utils.ts";

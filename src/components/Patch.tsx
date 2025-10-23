@@ -10,28 +10,31 @@
 
 import {DiffData} from "../data/ChangeData.tsx";
 
-type PatchProps = { diffData: DiffData };
+type PatchProps = { diffData: DiffData | DiffData[] };
 
 function Patch(props: PatchProps) {
 	return <>
 		<table className="diff-container">
 			<tbody>
 			{
-				props.diffData.diff.split('\n').map((line, index) =>
-					<tr key={index.toString()}>
-						<td className={
-							index < 2 ? 'bg-secondary-subtle' :
-								line.charAt(0) === '+' ? 'bg-success-subtle' :
-									line.charAt(0) === '-' ? 'bg-danger-subtle' :
-										line.charAt(0) === '@' ? 'bg-info-subtle' :
-											'bg-secondary-subtle'
-						}>{line}</td>
-					</tr>
-				)
+				(Array.isArray(props.diffData) ? props.diffData : [props.diffData])
+					.map(data => data.diff)
+					.flatMap((diff, diffIndex) =>
+						diff.split('\n').map((line, index) =>
+							<tr key={diffIndex.toString() + '/' + index.toString()}>
+								<td className={
+									index < 2 ? 'bg-info-subtle' :
+										line.charAt(0) === '+' ? 'bg-success-subtle' :
+											line.charAt(0) === '-' ? 'bg-danger-subtle' :
+												line.charAt(0) === '@' ? 'bg-info-subtle' :
+													'bg-secondary-subtle'
+								}>{line}</td>
+							</tr>
+						)
+					)
 			}
 			</tbody>
 		</table>
-		<small style={{fontStyle: 'italic'}}>This diff view is experimental and may contain errors.</small>
 	</>
 }
 

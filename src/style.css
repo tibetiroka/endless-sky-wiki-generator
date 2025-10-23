@@ -38,6 +38,13 @@ figure figcaption {
 	font-size: smaller;
 }
 
+.banner {
+	float: right;
+	max-width: 20vw;
+	max-height: 40vh;
+	padding-left: 20px;
+}
+
 main {
 	min-height: 85vh;
 	margin-bottom: 20px;

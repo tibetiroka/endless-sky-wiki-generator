@@ -164,7 +164,7 @@ export function LandingLocationGenerator(source: ReferenceSource, title?: string
 	function toDataArray(data: any | any[] | undefined): any[] {
 		if (!data) {
 			return [];
-		} else if (data.constructor === Array) {
+		} else if (Array.isArray(data)) {
 			return data;
 		}
 		return [data];
