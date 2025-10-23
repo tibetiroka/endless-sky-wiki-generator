@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Main implements Callable<Integer> {
@@ -327,6 +326,23 @@ public class Main implements Callable<Integer> {
 						indices.get(topLevel + '\\' + name).addEntry(key);
 					}
 				});
+			}
+			case "fleet" -> {
+				Object variants = data.get("variant");
+				if(variants != null) {
+					if(!(variants instanceof List<?>)) {
+						variants = List.of(variants);
+					}
+					for(Object variant : ((List<?>) variants)) {
+						if(variant instanceof Map<?, ?> bayMap) {
+							((Map<?, ?>) variant).forEach((ship, shipData)-> {
+								if(!ship.equals("name")) {
+									addReference(indices, "ship", (String) ship, source);
+								}
+							});
+						}
+					}
+				}
 			}
 		}
 	}
