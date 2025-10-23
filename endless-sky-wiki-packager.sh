@@ -31,7 +31,7 @@ function compress_each() {
 	do
 		output="$2/$(realpath -m --relative-to="$1" "$file")"
 		mkdir -p "$(realpath -m "$output/..")"
-    compress "$file" "$output"
+    	compress "$file" "$output"
 	done
 }
 
