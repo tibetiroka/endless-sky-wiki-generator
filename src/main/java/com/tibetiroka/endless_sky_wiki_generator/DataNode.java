@@ -135,7 +135,7 @@ public final class DataNode implements Comparable<DataNode> {
 		if(key == null)
 			return false;
 		return switch(key) {
-			case "conversation", "dialog", "description" -> true;
+			case "conversation", "dialog", "description", "category" -> true;
 			default -> false;
 		};
 	}
