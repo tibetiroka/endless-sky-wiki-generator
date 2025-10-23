@@ -5,7 +5,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import SharedLayout, {updateDarkMode} from "./SharedLayout";
-import {BrowserRouter, Navigate, Route, Routes} from "react-router";
+import {BrowserRouter, Route, Routes} from "react-router";
 import Home from "./Home";
 import Changelog from "./Changelog";
 import {ReferenceSource} from "./data/ReferenceSource.ts";

@@ -33,6 +33,18 @@ export function getParts(source: ReferenceSource): string[] {
 	}
 }
 
+export function typeToString(source: ReferenceSource): string {
+	if(isMultiPart(source)) {
+		const parts = getParts(source);
+		const validParts = ['series', 'bay type'];
+		if(parts[0] === 'category' && validParts.includes(parts[1])) {
+			return parts[1];
+		}
+		return parts[1] + ' ' + parts[0];
+	}
+	return source.type;
+}
+
 export function toURL(source: ReferenceSource): URL {
 	if (source.name === null) {
 		return new URL(source.type, getDomainWithProtocol());

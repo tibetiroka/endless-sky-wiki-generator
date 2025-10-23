@@ -20,11 +20,17 @@ export function ReferenceLink(props: ReferenceLinkProps) {
 	return <>
 		<a href={toURL(props.source).toString()}>{props.displayName}</a>
 		{props.count && props.count > 1 ? ' (' + props.count.toString() + ')' : undefined}
-		{props.displayName !== props.source.name ? <small style={{fontStyle: 'italic'}}>{' (' + props.source.name + ')'}</small> : undefined}
+		{props.displayName !== props.source.name ?
+			<small style={{fontStyle: 'italic'}}>{' (' + props.source.name + ')'}</small> : undefined}
 	</>;
 }
 
-type ReferenceLinkListProps = { sources: ReferenceSource[], categoryType?: string, counts?: number[] };
+type ReferenceLinkListProps = {
+	sources: ReferenceSource[],
+	categoryType?: string,
+	counts?: number[],
+	skipSort?: boolean
+};
 
 export function ReferenceLinkList(props: ReferenceLinkListProps) {
 	let [displayNames, setDisplayNames] = useState(undefined as string[] | undefined);
@@ -66,6 +72,7 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 								<ReferenceLinkList
 									sources={sources.map(a => a.source)}
 									counts={props.counts ? sources.map(a => (props.counts as number[])[a.index]) : undefined}
+									skipSort={props.skipSort}
 								/>
 							</li>
 						}
@@ -74,16 +81,20 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 				)}
 			</ul>
 		} else {
+			let sources = (displayNames as string[])
+				.map((displayName, index) => {
+					return {displayName, 'source': props.sources[index]};
+				});
+			if (!props.skipSort) {
+				sources = sources.toSorted((a, b) => a.displayName.localeCompare(b.displayName));
+			}
 			return <ul>
-				{(displayNames as string[])
-					.map((displayName, index) => {
-						return {displayName, 'source': props.sources[index]};
-					})
-					.toSorted((a, b) => a.displayName.localeCompare(b.displayName))
+				{sources
 					.map(({displayName, source}, index) =>
 						<li key={source.type + '/' + source.name}>
 							<ReferenceLink source={source} displayName={displayName} count={props.counts ? props.counts[index] : undefined}/>
-						</li>)}
+						</li>
+					)}
 			</ul>
 		}
 	}

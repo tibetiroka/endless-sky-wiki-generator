@@ -7,7 +7,7 @@
  *
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-import {isMultiPart, ReferenceSource} from "./data/ReferenceSource.ts";
+import {getParts, isMultiPart, ReferenceSource, typeToString} from "./data/ReferenceSource.ts";
 import React, {ReactElement, useState} from "react";
 import {
 	getChangelog,
@@ -23,10 +23,10 @@ import {findSource} from "./utils.ts";
 import {Alert} from "react-bootstrap";
 import {CommitData} from "./data/CommitData.tsx";
 import {ChangeData} from "./data/ChangeData.tsx";
-import Patch from "./components/Patch.tsx";
-import {ReferenceLinkList} from "./components/ReferenceLink.tsx";
+import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
+import {Changelog} from "./components/Changelog.tsx";
 
-export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined;
+export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
 export class PageGenerator {
 	title?: SectionGenerator = TitleGenerator;
@@ -40,6 +40,7 @@ export class PageGenerator {
 	outfitters?: SectionGenerator = OutfitterGenerator;
 	shipyards?: SectionGenerator = ShipyardGenerator;
 	variants?: SectionGenerator = VariantListGenerator;
+	fleets?: SectionGenerator = FleetListGenerator;
 	trivia?: SectionGenerator = TriviaGenerator;
 }
 
@@ -63,6 +64,7 @@ function WikiPage(props: SourceProps) {
 		{generator.outfitters ? generator.outfitters.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.shipyards ? generator.shipyards.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.variants ? generator.variants.call(generator, props.source, props.title) ?? <></> : <></>}
+		{generator.fleets ? generator.fleets.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.trivia ? generator.trivia.call(generator, props.source, props.title) ?? <></> : <></>}
 	</>;
 }
@@ -120,9 +122,7 @@ export function PreambleGenerator(source: ReferenceSource, title?: string) {
 		getChangelog(source).then(changelog => {
 			if (changelog.length) {
 				getDisplayName(source).then(displayName => {
-					const typeText = isMultiPart(source) ?
-						source.type.substring(source.type.indexOf('\\') + 1) + ' ' + source.type.substring(0, source.type.indexOf('\\'))
-						: source.type;
+					const typeText = typeToString(source);
 					preamble = <section>
 						<span>
 							{displayName + " is " + (typeText.match('^[aeiouAEIOU].*') ? 'an' : 'a') + ' ' + typeText + " "}
@@ -285,7 +285,22 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 				});
 				break;
 			case 'minable':
-				// todo.
+				getReferences(source.type).then(references => {
+					const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
+					const systems: ReferenceSource[] = myReferences.filter(source => source.type === 'system');
+					if (systems.length > 0) {
+						setLocation(<section>
+							<h2>Location</h2>
+							This minable appears in the following systems:
+							<ReferenceLinkList sources={systems}/>
+						</section>);
+					} else {
+						setLocation(<section>
+							<h2>Location</h2>
+							This minable doesn't appear in any system.
+						</section>);
+					}
+				});
 				break;
 			case 'outfitter':
 			case 'shipyard':
@@ -317,7 +332,21 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 				});
 				break;
 			case 'planet':
-				// planet references are broken, backend todo
+				getReferences(source.type).then(references => {
+					const myReferences = references[source.name as string] ?? [];
+					const systems: ReferenceSource[] = myReferences.filter(source => source.type === 'system');
+					Promise.all(systems.map(system => getDisplayName(system))).then(systemNames => {
+						setLocation(<section>
+							<h2>Location</h2>
+							{systems.length === 0 ?
+								<>This planet doesn't appear in any system.</> :
+								(systems.length === 1 ?
+									<>This planet appears in the <ReferenceLink source={systems[0]} displayName={systemNames[0]}/> system.</> :
+									<>This wormhole connects the <ReferenceLink source={systems[0]} displayName={systemNames[0]}/> and <ReferenceLink source={systems[1]} displayName={systemNames[1]}/> systems.</>)}
+						</section>);
+					})
+
+				});
 				break;
 		}
 	}
@@ -325,8 +354,8 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 }
 
 export function OutfitGenerator(source: ReferenceSource, title?: string) {
-	let [outfits, setOutfits] = useState(undefined as ReactElement | undefined);
-	if (!outfits) {
+	let [outfits, setOutfits] = useState(undefined as ReactElement | undefined | null);
+	if (outfits === undefined) {
 		if (source.type === 'ship') {
 			getData(source).then(data => {
 				// todo: check the parent ship, I don't even remember how that works
@@ -364,14 +393,30 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 					</section>
 				);
 			});
+		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
+			getReferences(source.type).then(references => {
+				const myReferences = references[source.name as string] ?? [];
+				let outfitReferences = myReferences.filter(ref => ref.type === 'outfit');
+				if (outfitReferences.length > 0) {
+					setOutfits(<section>
+						<h2>Outfits</h2>
+						<details>
+							<summary>This category contains the following outfits:</summary>
+							<ReferenceLinkList sources={myReferences} categoryType='outfit'/>
+						</details>
+					</section>);
+				} else {
+					setOutfits(null);
+				}
+			});
 		}
 	}
 	return outfits;
 }
 
 export function ShipGenerator(source: ReferenceSource, title?: string) {
-	let [ships, setShips] = useState(undefined as ReactElement | undefined);
-	if (!ships) {
+	let [ships, setShips] = useState(undefined as ReactElement | undefined | null);
+	if (ships === undefined) {
 		if (source.type === 'outfit') {
 			getReferences(source.type).then(references => {
 				const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
@@ -406,6 +451,24 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 							: undefined}
 					</section>
 				);
+			});
+		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
+			getReferences(source.type).then(references => {
+				const myReferences = references[source.name as string] ?? [];
+				let shipReferences = myReferences.filter(ref => ref.type === 'ship');
+				if (shipReferences.length > 0) {
+					setShips(<section>
+						<h2>Ships</h2>
+						<details>
+							{getParts(source)[1] === 'bay type' ?
+								<summary>Ships with bays of this type:</summary> :
+								<summary>This category contains the following ships:</summary>}
+							<ReferenceLinkList sources={myReferences} categoryType={getParts(source)[1] === 'ship' ? undefined : 'ship'}/>
+						</details>
+					</section>);
+				} else {
+					setShips(null);
+				}
 			});
 		}
 	}
@@ -524,9 +587,51 @@ export function VariantListGenerator(source: ReferenceSource, title?: string) {
 	return variants;
 }
 
+export function FleetListGenerator(source: ReferenceSource, title?: string) {
+	let [fleets, setFleets] = useState(undefined as ReactElement | undefined);
+
+	if (!fleets) {
+		switch (source.type) {
+			case 'system':
+				getData(source).then(data => {
+					const myFleets: any[] = [].concat(data.getData()['fleet'] ?? []);
+					setFleets(<section>
+						<h2>Fleets</h2>
+						{myFleets.length > 0 ?
+							<>
+								The following fleets appear in this system naturally:
+								<ReferenceLinkList sources={myFleets.map(fleet => new ReferenceSource('fleet', fleet['name']))}/>
+							</>
+							: <>No fleets appear in this system naturally.</>}
+					</section>);
+				})
+				break;
+			case 'ship':
+				getReferences(source.type).then(references => {
+					const myReferences = references[source.name as string] ?? [];
+					const myFleets = myReferences.filter(source => source.type === 'fleet');
+					setFleets(<section>
+						<h2>Fleets</h2>
+						{myFleets.length > 0 ?
+							<>
+								This ship appears in the following fleets:
+								<ReferenceLinkList sources={myFleets}/>
+							</>
+							: <>This ship doesn't appear in any fleet.</>}
+					</section>);
+				});
+		}
+	}
+	return fleets;
+}
+
 export function TriviaGenerator(source: ReferenceSource, title?: string) {
 	let [changelogEntries, setChangelogEntries] = useState(new Array<ChangeData>());
 	let [data, setData] = useState(undefined as ObjectData | undefined);
+
+	if (isMultiPart(source)) {
+		return undefined;
+	}
 
 	if (changelogEntries.length === 0) {
 		getChangelog(source).then(changelog => setChangelogEntries(changelog));
@@ -548,20 +653,7 @@ export function TriviaGenerator(source: ReferenceSource, title?: string) {
 					View the current state in the <a href={getInteractiveFileURL(data.getLocation().filename, data.getLocation().line, data.getLastCommit()).toString()}>game data</a>.
 				</p>
 				: undefined}
-			{changelogEntries.toReversed().map(entry =>
-				<details key={entry.commit.hash}>
-					<summary>
-						{entry.diff.added ? <span className="text-success">(added) </span> : undefined}
-						{entry.diff.removed ? <span className="text-danger">(removed) </span> : undefined}
-						{(!entry.diff.removed && !entry.diff.added) ?
-							<span className="text-info">(edited) </span> : undefined}
-						<span style={{fontStyle: "italic"}}>{entry.commit.author}</span>
-						{": " + entry.commit.message + ' '}
-						<a href={getCommitURL(entry.commit.hash).toString()}>(view commit)</a>
-					</summary>
-					<Patch diffData={entry.diff}/>
-				</details>
-			)}
+			<Changelog entries={changelogEntries.toReversed()}/>
 		</details>);
 	}
 

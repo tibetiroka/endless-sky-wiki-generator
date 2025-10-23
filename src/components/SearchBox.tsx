@@ -9,7 +9,15 @@
  */
 
 import {useEffect, useState} from "react";
-import {IndexEntry, ReferenceSource, ReferenceSourceIndex, toURL} from "../data/ReferenceSource.ts";
+import {
+	getParts,
+	IndexEntry,
+	isMultiPart,
+	ReferenceSource,
+	ReferenceSourceIndex,
+	toURL,
+	typeToString
+} from "../data/ReferenceSource.ts";
 import Fuse from "fuse.js";
 import {fetchData} from "../web_utils.ts";
 import {equals} from "../utils.ts";
@@ -111,7 +119,7 @@ function generateSuggestions(suggestions: Array<IndexEntry>, handleSelect: Selec
 						continue outer;
 					}
 				}
-				entries.push(new SuggestionEntry(suggestion.key, source, suggestion.value.length > 1 ? source.type : null));
+				entries.push(new SuggestionEntry(suggestion.key, source, suggestion.value.length > 1 ? typeToString(source) : null));
 			}
 	}
 	return entries
