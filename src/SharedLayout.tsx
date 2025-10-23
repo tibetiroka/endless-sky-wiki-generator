@@ -12,12 +12,10 @@ function Logo() {
 }
 
 export function updateDarkMode() {
-	console.log("update");
 	const body = document.getElementById('body');
 	const icon = document.getElementById('darkModeToggleIcon');
 	const button = document.getElementById('darkModeToggle');
 	if (body === null || icon === null || button === null) {
-		console.log('too early');
 		return;
 	}
 	if (localStorage.getItem('isDarkMode') === 'true') {

@@ -73,10 +73,6 @@ function DynamicRoute() {
 	return <WikiPage source={source} title=""/>
 }
 
-function MissingRoute() {
-	return <Navigate to={{pathname: '/'}}/>
-}
-
 function registerCustomPages() {
 	// add pages to CUSTOM_PAGES here
 }

@@ -59,7 +59,7 @@ export function getDisplayName(source: ReferenceSource): Promise<string> {
 				return Promise.resolve(key);
 			}
 		}
-		return Promise.resolve(source.name as string);
+		return Promise.reject("No display name found");
 	})
 }
 
