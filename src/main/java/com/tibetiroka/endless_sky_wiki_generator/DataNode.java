@@ -27,6 +27,7 @@ public final class DataNode implements Comparable<DataNode> {
 	private final @NotNull List<@NotNull String> values = new ArrayList<>();
 	private @Nullable String fileName;
 	private int lineNumber;
+	private int cachedHashCode = 0;
 
 	public DataNode(@NotNull ListIterator<@NotNull String> lines) {
 		if(!lines.hasNext()) {
@@ -178,7 +179,10 @@ public final class DataNode implements Comparable<DataNode> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(children, indent, key, values, fileName, lineNumber);
+		if(cachedHashCode == 0) {
+			cachedHashCode = Objects.hash(children, indent, key, values, fileName, lineNumber);
+		}
+		return cachedHashCode;
 	}
 
 	boolean isEmpty() {

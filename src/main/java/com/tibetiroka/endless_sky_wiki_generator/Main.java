@@ -25,33 +25,85 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Main {
-	// example hash: 168f3d7b41f6a76447e4e1921abb547bdcd55d0c
-	public static void main(String[] args) {
-		System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "" + Runtime.getRuntime().availableProcessors() * 2);
-		Config config = new Config(args);
-		File dataDir = new File(config.repository, "data");
-		Instant start = Instant.now();
-		OutputGenerator output = new OutputGenerator(new ArrayList<>());
-		Future<Void> dataTask = null;
-		if(!config.repository.exists()) {
-			try(Git _ = Git.cloneRepository().setURI("https://github.com/endless-sky/endless-sky.git").setDirectory(config.repository).call()) {
-			} catch(GitAPIException e) {
+	private static int MAX_GIT_INSTANCES = Runtime.getRuntime().availableProcessors();
+
+	public static void main(String[] args) throws Exception {
+		System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "" + Runtime.getRuntime().availableProcessors());
+
+		// Check output dir
+		File tmp = new File(System.getProperty("java.io.tmpdir"));
+		System.out.println("Output will be generated in " + tmp);
+		if(!isInMemory(tmp.toPath())) {
+			System.err.println("The output directory could not be determined to be in memory. I/O may be severely bottlenecked. It is highly recommended to not continue.");
+			System.err.println("Execution will resume in 10 seconds. You have been warned.");
+			MAX_GIT_INSTANCES = 1;
+			Thread.sleep(10000);
+		}
+
+		// Clone the game
+		List<File> repositories = new ArrayList<>();
+		repositories.add(new File(tmp, "endless-sky"));
+
+		if(repositories.getFirst().exists()) {
+			try(Git git = Git.open(repositories.getFirst())) {
+				git.reset().setMode(ResetType.HARD).setRef("origin/master").call();
+				git.pull().setRemoteBranchName("master").setTagOpt(TagOpt.FETCH_TAGS).call();
+			} catch(Exception e) {
 				throw new RuntimeException(e);
 			}
+		} else {
+			try(Git _ = Git.cloneRepository().setURI("https://github.com/endless-sky/endless-sky.git").setDirectory(repositories.getFirst()).call()) {
+			}
 		}
-		try(Git git = Git.open(config.repository)) {
-			git.reset().setMode(ResetType.HARD).setRef("origin/master").call();
-			git.pull().setRemoteBranchName("master").setTagOpt(TagOpt.FETCH_TAGS).call();
+
+		Instant start = Instant.now();
+
+		// Copy the repository in memory if we have enough space.
+		try(Stream<Path> paths = Files.walk(repositories.getFirst().toPath())) {
+			long repoSize = paths.parallel()
+			                     .map(Path::toFile)
+			                     .filter(File::isFile)
+			                     .mapToLong(File::length)
+			                     .sum();
+			long fsSize = getAvailableSpace(repositories.getFirst().toPath());
+			long maxRepos = Math.min((long) ((fsSize * 0.8) / repoSize), MAX_GIT_INSTANCES);
+			System.out.println("Using " + maxRepos + " repositories");
+			while(repositories.size() < maxRepos) {
+				repositories.add(new File(repositories.getLast().getParentFile(), repositories.getLast().getName() + "_"));
+				if(!repositories.getLast().exists()) {
+					Path source = repositories.getFirst().toPath();
+					Path target = repositories.getLast().toPath();
+					try(Stream<Path> stream = Files.walk(source)) {
+						stream.forEach(file -> {
+							try {
+								Files.copy(file, target.resolve(source.relativize(file)));
+							} catch(IOException e) {
+								throw new RuntimeException(e);
+							}
+						});
+					} catch(IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		}
+
+		// Get all relevant commits and parse the commit data
+		List<RevCommit> commitList;
+		Map<RevCommit, CommitInfo> commitInfo;
+		try(Git git = Git.open(repositories.getFirst())) {
 			List<RevCommit> commits = listCommits(git);
 			Map<Ref, Integer> tags = git.tagList()
 			                            .call()
@@ -68,36 +120,138 @@ public class Main {
 					                            throw new RuntimeException(e);
 				                            }
 			                            }));
-			Map<RevCommit, CommitInfo> commitInfo = commits.stream()
-			                                               .parallel()
-			                                               .collect(Collectors.toMap(commit -> commit, commit -> new CommitInfo(commit, tags)));
+			commitInfo = commits.stream()
+			                    .parallel()
+			                    .collect(Collectors.toMap(commit -> commit, commit -> new CommitInfo(commit, tags)));
 			System.out.println("Found " + commits.size() + " commits");
 			if(commits.isEmpty())
 				return;
 
-			for(RevCommit commit : commits) {
-				checkout(git, commit);
-				System.out.println(commit.toObjectId());
-				// Interleave the next commit's checkout and parsing with the data processing of this commit.
-				List<DataNode> nodes = parse(dataDir);
-				if(dataTask != null) {
-					dataTask.get();
-				}
-				dataTask = CompletableFuture.runAsync(() -> output.addNewData(nodes, commitInfo.get(commit)));
-			}
-			if(dataTask != null) {
-				dataTask.get();
-			}
-		} catch(Exception e) {
-			throw new RuntimeException(e);
+			commitList = Collections.synchronizedList(new ArrayList<>(commits.reversed()));
 		}
-		output.save(new File(config.repository.getParent(), "es-wiki-diff"));
+
+		OutputGenerator output = new OutputGenerator(new ArrayList<>());
+		BlockingQueue<Future<List<DataNode>>> parsingTasks = new LinkedBlockingQueue<>();
+		BlockingQueue<RevCommit> parsedCommits = new LinkedBlockingQueue<>();
+
+		// Go through all commits and parse the data files.
+		final CyclicBarrier parserSync = new CyclicBarrier(repositories.size());
+		final Future<List<DataNode>>[] tempParsingTasks = new Future[repositories.size()];
+		List<Thread> parserThreads =
+				repositories
+						.stream()
+						.map(file ->
+								     Thread.ofPlatform().name("Parser thread for " + file.getName()).start(() -> {
+									     try {
+										     final int threadIndex = parserSync.await();
+										     File dataDir = new File(file, "data");
+										     try(Git git = Git.open(file)) {
+											     // Get the next commit. The order is deterministic so we can restore the commit order after parsing.
+											     // commitList is reversed, so the first thread takes the last element, which should be the first in the output.
+											     while(!commitList.isEmpty()) {
+												     if(threadIndex < commitList.size()) {
+													     RevCommit commit = commitList.get(commitList.size() - threadIndex - 1);
+													     checkout(git, commit);
+
+													     List<@NotNull CompletableFuture<@NotNull List<@NotNull DataNode>>> nodePromises = readData(dataDir);
+													     tempParsingTasks[threadIndex] = CompletableFuture.supplyAsync(() -> {
+														     ArrayList<DataNode> nodes = new ArrayList<>();
+														     for(CompletableFuture<@NotNull List<@NotNull DataNode>> promise : nodePromises) {
+															     try {
+																     nodes.addAll(promise.get());
+															     } catch(InterruptedException | ExecutionException e) {
+																     throw new RuntimeException(e);
+															     }
+														     }
+														     return nodes;
+													     });
+												     }
+												     parserSync.await();
+												     if(threadIndex == 0) {
+													     int entryCount = Math.min(commitList.size(), repositories.size());
+													     for(int i = 0; i < entryCount; i++) {
+														     RevCommit commit = commitList.removeLast();
+														     parsedCommits.put(commit);
+														     parsingTasks.put(tempParsingTasks[i]);
+													     }
+												     }
+												     parserSync.await();
+											     }
+										     }
+									     } catch(Exception e) {
+										     throw new RuntimeException(e);
+									     }
+								     })
+						).toList();
+
+		// Begin processing each commit's data
+		AtomicBoolean terminated = new AtomicBoolean(false);
+		Thread dataThread = new Thread(() -> {
+			while(!terminated.get() || !parsingTasks.isEmpty()) {
+				try {
+					Future<List<DataNode>> parseTask = parsingTasks.poll(1, TimeUnit.SECONDS);
+					if(parseTask != null) {
+						RevCommit commit = parsedCommits.remove();
+						System.out.println(commit);
+						output.addNewData(parseTask.get(), commitInfo.get(commit));
+					}
+				} catch(InterruptedException | ExecutionException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}, "Data thread");
+		dataThread.start();
+
+		for(Thread parserThread : parserThreads) {
+			parserThread.join();
+		}
+		terminated.set(true);
+
+		repositories
+				.subList(1, repositories.size())
+				.stream()
+				.parallel()
+				.forEach(file -> {
+					try(Stream<Path> items = Files.walk(file.toPath())) {
+						items.toList()
+						     .reversed()
+						     .forEach(path -> path.toFile().delete());
+					} catch(IOException e) {
+						throw new RuntimeException(e);
+					}
+				});
+
+		dataThread.join();
+		output.save(new File(tmp, "es-wiki-diff"));
 		Instant end = Instant.now();
 		System.out.println("Runtime: " + (end.toEpochMilli() - start.toEpochMilli()) / 1000.0f + "s");
 	}
 
 	private static void checkout(@NotNull Git git, @NotNull RevCommit commit) throws GitAPIException {
 		git.reset().setRef(ObjectId.toString(commit.toObjectId())).setMode(ResetType.HARD).call();
+	}
+
+	private static long getAvailableSpace(Path path) {
+		try {
+			FileStore store = Files.getFileStore(path);
+			return store.getUsableSpace();
+		} catch(Exception e) {
+			return 0;
+		}
+	}
+
+	private static boolean isInMemory(Path path) {
+		try {
+			FileStore store = Files.getFileStore(path);
+			String type = store.type().toLowerCase();
+			return type.equals("tmpfs")
+			       || type.equals("ramfs")
+			       || type.equals("devtmpfs")
+			       || type.equals("shm")
+			       || type.contains("memory");
+		} catch(Exception e) {
+			return false;
+		}
 	}
 
 	private static @NotNull List<@NotNull RevCommit> listCommits(@NotNull Git git) throws IOException, GitAPIException {
@@ -122,42 +276,30 @@ public class Main {
 		return commits;
 	}
 
-	private static @NotNull List<@NotNull DataNode> parse(@NotNull File baseDir) throws IOException, InterruptedException, ExecutionException {
-		ExecutorService virtualPool = Executors.newVirtualThreadPerTaskExecutor();
-		Future<List<DataNode>> result = virtualPool.submit(() -> {
-			try(Stream<Path> paths = Files.walk(baseDir.toPath())) {
-				return paths.parallel()
-				            .filter(p -> p.toFile().isFile())
-				            .mapMulti((Path path, Consumer<DataNode> mapper) -> {
-					            try {
-						            ListIterator<String> textIt = Files.readAllLines(path, StandardCharsets.ISO_8859_1).listIterator();
-						            String filename = baseDir.toPath().relativize(path).toString();
-						            while(textIt.hasNext()) {
-							            int lineNumber = textIt.nextIndex() + 1;
-							            DataNode node = new DataNode(textIt);
-							            node.setFilePos(filename, lineNumber);
-							            mapper.accept(node);
-						            }
-					            } catch(IOException e) {
-						            throw new RuntimeException(e);
-					            }
-				            })
-				            .filter(node -> !node.isEmpty())
-				            .toList();
-			}
-		});
-		virtualPool.shutdown();
-		return result.get();
-	}
-
-	private static final class Config {
-		public final File repository;
-
-		public Config(String[] args) {
-			if(args.length < 1)
-				throw new IllegalArgumentException("Usage: <repository>");
-
-			repository = new File(args[0]);
+	private static @NotNull List<@NotNull CompletableFuture<@NotNull List<@NotNull DataNode>>> readData(@NotNull File baseDir) throws IOException {
+		try(Stream<Path> paths = Files.walk(baseDir.toPath())) {
+			return paths.parallel()
+			            .filter(p -> p.toFile().isFile())
+			            .map(path -> {
+				            try {
+					            ListIterator<String> textIt = Files.readAllLines(path, StandardCharsets.ISO_8859_1).listIterator();
+					            String filename = baseDir.toPath().relativize(path).toString();
+					            return new SimpleEntry<>(filename, textIt);
+				            } catch(IOException e) {
+					            throw new RuntimeException(e);
+				            }
+			            }).map(entry -> CompletableFuture.supplyAsync(() -> {
+						List<DataNode> nodes = new ArrayList<>();
+						while(entry.getValue().hasNext()) {
+							int lineNumber = entry.getValue().nextIndex() + 1;
+							DataNode node = new DataNode(entry.getValue());
+							node.setFilePos(entry.getKey(), lineNumber);
+							if(!node.isEmpty()) {
+								nodes.add(node);
+							}
+						}
+						return nodes;
+					})).toList();
 		}
 	}
 }
