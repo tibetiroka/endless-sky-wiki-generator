@@ -10,6 +10,10 @@
 
 package com.tibetiroka.endless_sky_wiki_generator;
 
+import com.google.gson.FormattingStyle;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,7 +26,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.TagOpt;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
@@ -57,6 +63,7 @@ public class Main {
 		repositories.add(new File(tmp, "endless-sky"));
 
 		if(repositories.getFirst().exists()) {
+			System.out.println("Fetching latest commits");
 			try(Git git = Git.open(repositories.getFirst())) {
 				git.reset().setMode(ResetType.HARD).setRef("origin/master").call();
 				git.pull().setRemoteBranchName("master").setTagOpt(TagOpt.FETCH_TAGS).call();
@@ -64,6 +71,7 @@ public class Main {
 				throw new RuntimeException(e);
 			}
 		} else {
+			System.out.println("Cloning endless-sky/endless-sky.git");
 			try(Git _ = Git.cloneRepository().setURI("https://github.com/endless-sky/endless-sky.git").setDirectory(repositories.getFirst()).call()) {
 			}
 		}
@@ -133,6 +141,7 @@ public class Main {
 		OutputGenerator output = new OutputGenerator(new ArrayList<>());
 		BlockingQueue<Future<List<DataNode>>> parsingTasks = new LinkedBlockingQueue<>();
 		BlockingQueue<RevCommit> parsedCommits = new LinkedBlockingQueue<>();
+		List<String> files = new ArrayList<>();
 
 		// Go through all commits and parse the data files.
 		final CyclicBarrier parserSync = new CyclicBarrier(repositories.size());
@@ -165,6 +174,9 @@ public class Main {
 														     }
 														     return nodes;
 													     });
+														 if(threadIndex == commitList.size() - 1) {
+															 files.addAll(listFiles(file, new String[]{"images", "sounds"}));
+														 }
 												     }
 												     parserSync.await();
 												     if(threadIndex == 0) {
@@ -223,6 +235,7 @@ public class Main {
 
 		dataThread.join();
 		output.save(new File(tmp, "es-wiki-diff"));
+		saveFiles(files, new File(tmp, "es-wiki-diff"));
 		Instant end = Instant.now();
 		System.out.println("Runtime: " + (end.toEpochMilli() - start.toEpochMilli()) / 1000.0f + "s");
 	}
@@ -276,6 +289,23 @@ public class Main {
 		return commits;
 	}
 
+	private static @NotNull List<String> listFiles(@NotNull File basedir, @NotNull String @NotNull [] directories) throws IOException {
+		ArrayList<String> files = new ArrayList<>();
+		Path basePath = basedir.toPath();
+		for(String directory : directories) {
+			File dir = new File(basedir, directory);
+			if(dir.exists() && dir.isDirectory()) {
+				try(Stream<Path> paths = Files.walk(dir.toPath())) {
+					files.addAll(paths.parallel()
+					                  .filter(path -> path.toFile().isFile())
+					                  .map(path -> basePath.relativize(path).toString())
+					                  .toList());
+				}
+			}
+		}
+		return files;
+	}
+
 	private static @NotNull List<@NotNull CompletableFuture<@NotNull List<@NotNull DataNode>>> readData(@NotNull File baseDir) throws IOException {
 		try(Stream<Path> paths = Files.walk(baseDir.toPath())) {
 			return paths.parallel()
@@ -300,6 +330,18 @@ public class Main {
 						}
 						return nodes;
 					})).toList();
+		}
+	}
+
+	private static void saveFiles(List<String> files, File directory) throws IOException {
+		JsonArray fileArray = new JsonArray();
+		files.sort(String::compareTo);
+		for(String file : files) {
+			fileArray.add(file);
+		}
+		try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(directory, "files.json")))) {
+			Gson gson = new GsonBuilder().setFormattingStyle(FormattingStyle.PRETTY).create();
+			gson.toJson(fileArray, writer);
 		}
 	}
 }
