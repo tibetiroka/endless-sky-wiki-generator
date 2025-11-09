@@ -21,7 +21,7 @@ let contentType = pathParts[0];
 let contentName = pathParts.length > 1 ? pathParts[1] : null;
 let extraData = window.location.search;
 
-//todo
+//todo (human routing? what was this todo?)
 switch (contentName) {
 }
 

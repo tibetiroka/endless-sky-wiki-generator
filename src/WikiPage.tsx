@@ -25,11 +25,13 @@ import {CommitData} from "./data/CommitData.tsx";
 import {ChangeData} from "./data/ChangeData.tsx";
 import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
 import {Changelog} from "./components/Changelog.tsx";
+import {StatBox} from "./components/StatBox.tsx";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
 export class PageGenerator {
 	title?: SectionGenerator = TitleGenerator;
+	stats?: SectionGenerator = StatsGenerator;
 	preamble?: SectionGenerator = PreambleGenerator;
 	description?: SectionGenerator = DescriptionGenerator;
 	landingLocations?: SectionGenerator = LandingLocationGenerator;
@@ -52,8 +54,21 @@ function WikiPage(props: SourceProps) {
 	const mappedSource: ReferenceSource | null = findSource(props.source, CUSTOM_PAGE_GENERATORS.keys());
 	const generator = mappedSource ? CUSTOM_PAGE_GENERATORS.get(mappedSource) as PageGenerator : new PageGenerator();
 
+	const [titleSet, setTitleSet] = useState(false);
+	if (!titleSet) {
+		setTitleSet(true);
+		if (props.title) {
+			document.title = props.title + " | " + document.title;
+		} else {
+			getDisplayName(props.source).then(name => {
+				document.title = name + " | " + document.title;
+			});
+		}
+	}
+
 	return <>
 		{generator.title ? generator.title.call(generator, props.source, props.title) ?? <></> : <></>}
+		{generator.stats ? generator.stats.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.preamble ? generator.preamble.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.description ? generator.description.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.landingLocations ? generator.landingLocations.call(generator, props.source, props.title) ?? <></> : <></>}
@@ -148,14 +163,24 @@ export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 			if (desc) {
 				description = <section>
 					<h2>Description</h2>
-					{(typeof desc === 'string') ? <p>{desc}</p> : (desc as string[]).map(text =>
-						<p key={text}>{text}</p>)}
+					{(typeof desc === 'string') ? <p>{desc}</p> : (desc as any[]).map(text => {
+							if (text.name) {
+								return <p key={text.name} style={{fontStyle: "italic"}} title='This text is not always displayed in-game.'>{text.name}</p>
+							} else {
+								return <p key={text}>{text}</p>;
+							}
+						}
+					)}
 				</section>;
 				setDescription(description);
 			}
 		});
 	}
 	return description;
+}
+
+export function StatsGenerator(source: ReferenceSource, title?: string) {
+	return <div className='side-stat-box'><StatBox elements={[source]}/></div>
 }
 
 export function LandingLocationGenerator(source: ReferenceSource, title?: string) {

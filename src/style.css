@@ -58,14 +58,54 @@ h2 {
 	border-bottom: solid 1px;
 	border-color: grey;
 	padding-top: 10px;
+	overflow: hidden;
 }
 
-.changelog>* {
+table.stats th,
+table.stats td.header {
+	background: #4D7A97;
+	color: black;
+	text-align: center;
+	font-weight: bold;
+	font-size: larger;
+}
+
+table.stats {
+	border: 1px #4D7A97 solid;
+}
+
+table.stats th,
+table.stats td {
+	border-top: 1px #4D7A97 solid;
+	border-bottom: 1px #4D7A97 solid;
+	padding: 2px 5px;
+}
+
+table.stats tr td:first-child {
+	font-weight: bold;
+}
+
+div.side-stat-box {
+	display: inline;
+	float: right;
+	padding: 10px;
+}
+
+table td:has(img.image-display) {
+	text-align: center;
+}
+
+img.image-display {
+	max-width: 250px;
+	max-height: 250px;
+}
+
+.changelog > * {
 	margin-left: 10px;
 	margin-top: 5px;
 }
 
-.changelog>*:not(p)>* {
+.changelog > *:not(p) > * {
 	margin-left: 10px;
 }
 
