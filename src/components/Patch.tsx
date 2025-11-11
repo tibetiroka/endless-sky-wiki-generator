@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {DiffData} from "../data/ChangeData.tsx";
+import {DiffData} from "../data/ChangeData.ts";
 
 type PatchProps = { diffData: DiffData | DiffData[] };
 

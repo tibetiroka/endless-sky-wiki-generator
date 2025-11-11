@@ -9,9 +9,10 @@
  */
 
 import {ReferenceSource} from "../data/ReferenceSource.ts";
-import {getData, getEsUrl} from "../data/DataFetcher.tsx";
+import {getData} from "../data/DataFetcher.ts";
 import {ReactElement, useState} from "react";
-import {ObjectData} from "../data/ObjectData.tsx";
+import {ObjectData} from "../data/ObjectData.ts";
+import {Animation, AnimationDisplay} from "./AnimationDisplay.tsx"
 import {Tab, Tabs} from "react-bootstrap";
 
 type StatBoxProps = { elements: ReferenceSource[] }
@@ -201,41 +202,19 @@ export function StatBox(props: StatBoxProps) {
 type CombinedImageDisplayProps = { data: ObjectData };
 
 function CombinedImageDisplay(props: CombinedImageDisplayProps) {
-	const images: { name: string, path: string }[] = [];
-	images.push({name: 'Thumbnail', path: props.data.getData()['thumbnail']});
-	images.push({name: 'Overhead', path: props.data.getData()['sprite']});
+	const images: { name: string, animation?: Animation }[] = [];
+	images.push({name: 'Thumbnail', animation: props.data.getData()['thumbnail']});
+	images.push({name: 'Overhead', animation: props.data.getData()['sprite']});
 
-	const existingImages = images.filter(image => image.path);
+	const existingImages = images.filter(image => image.animation);
 	if (existingImages.length > 1) {
 		return <Tabs className='combined-image-display-tabs'>
 			{existingImages.map(image => <Tab key={image.name} eventKey={image.name} title={image.name}>
-				<ImageDisplay path={image.path} ref={props.data.isRemoved() ? props.data.getRemovedCommit()?.hash : undefined}/>
+				<AnimationDisplay animation={image.animation as Animation}/>
 			</Tab>)}
 		</Tabs>
 	} else if (existingImages.length === 1) {
-		return <ImageDisplay path={images[0].path} ref={props.data.isRemoved() ? props.data.getRemovedCommit()?.hash : undefined}></ImageDisplay>
+		return <AnimationDisplay animation={existingImages[0].animation as Animation}></AnimationDisplay>
 	}
 	return undefined;
-}
-
-type ImageDisplayProps = { path: string, ref?: string }
-
-// todo: index images
-export function ImageDisplay(props: ImageDisplayProps) {
-	const basePath = 'images/' + props.path;
-	const modes = ['', '-', '+', '^', '~'];
-	const indices = ['', '0', '00', '000', '0000'];
-	const extensions = ['.png', '.jpg', '.jpeg', '.avif', '.avifs'];
-
-	const paths = [];
-	for (const mode of modes) {
-		for (const index of indices) {
-			for (const extension of extensions) {
-				paths.push(basePath + mode + index + extension);
-			}
-		}
-	}
-	paths.push();
-
-	return <img className='image-display' alt='' src={(props.ref ? getEsUrl('images/outfit/unknown.png', props.ref) : getEsUrl('images/outfit/unknown.png')).toString()}/>
 }

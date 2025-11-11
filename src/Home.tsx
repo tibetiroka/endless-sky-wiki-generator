@@ -1,5 +1,5 @@
 import {ReactElement, useState} from "react";
-import {BulkChangeData} from "data/ChangeData.tsx";
+import {BulkChangeData} from "data/ChangeData.ts";
 import {fetchData} from "web_utils.ts";
 import {Changelog} from "./components/Changelog.tsx";
 // @ts-ignore

@@ -21,6 +21,14 @@ export class ReferenceSource {
 	}
 }
 
+export function isLicense(source: ReferenceSource): boolean {
+	return source.type === 'outfit' && (source.name?.endsWith(" License") ?? false);
+}
+
+export function getLicenseName(source: ReferenceSource): string {
+	return source.name?.substring(0, source.name?.length - " License".length) ?? '';
+}
+
 export function isMultiPart(source: ReferenceSource): boolean {
 	return source.type.includes('\\');
 }

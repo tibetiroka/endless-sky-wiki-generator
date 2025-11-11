@@ -7,7 +7,14 @@
  *
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-import {getParts, isMultiPart, ReferenceSource, typeToString} from "./data/ReferenceSource.ts";
+import {
+	getLicenseName,
+	getParts,
+	isLicense,
+	isMultiPart,
+	ReferenceSource,
+	typeToString
+} from "./data/ReferenceSource.ts";
 import React, {ReactElement, useState} from "react";
 import {
 	getChangelog,
@@ -16,13 +23,13 @@ import {
 	getDisplayName,
 	getInteractiveFileURL,
 	getReferences
-} from "./data/DataFetcher.tsx";
-import {ObjectData} from './data/ObjectData.tsx'
+} from "./data/DataFetcher.ts";
+import {ObjectData} from './data/ObjectData.ts'
 import {Navigate} from "react-router";
 import {findSource} from "./utils.ts";
 import {Alert} from "react-bootstrap";
-import {CommitData} from "./data/CommitData.tsx";
-import {ChangeData} from "./data/ChangeData.tsx";
+import {CommitData} from "./data/CommitData.ts";
+import {ChangeData} from "./data/ChangeData.ts";
 import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
 import {Changelog} from "./components/Changelog.tsx";
 import {StatBox} from "./components/StatBox.tsx";
@@ -137,7 +144,7 @@ export function PreambleGenerator(source: ReferenceSource, title?: string) {
 		getChangelog(source).then(changelog => {
 			if (changelog.length) {
 				getDisplayName(source).then(displayName => {
-					const typeText = typeToString(source);
+					const typeText = isLicense(source) ? 'license' : typeToString(source);
 					preamble = <section>
 						<span>
 							{displayName + " is " + (typeText.match('^[aeiouAEIOU].*') ? 'an' : 'a') + ' ' + typeText + " "}
@@ -389,7 +396,6 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
 						The {data.displayName} has the following outfits installed:
-						{/*todo: use a table?*/}
 						<ReferenceLinkList
 							sources={outfits.map(outfit => new ReferenceSource('outfit', outfit))}
 							categoryType='outfit'
@@ -421,7 +427,7 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
 			getReferences(source.type).then(references => {
 				const myReferences = references[source.name as string] ?? [];
-				let outfitReferences = myReferences.filter(ref => ref.type === 'outfit');
+				const outfitReferences = myReferences.filter(ref => ref.type === 'outfit');
 				if (outfitReferences.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
@@ -434,6 +440,23 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 					setOutfits(null);
 				}
 			});
+		} else if (isLicense(source)) {
+			getReferences('license').then(references => {
+				const myReferences = references[getLicenseName(source)] ?? [];
+				const outfitReferences = myReferences.filter(ref => ref.type === 'outfit' && ref.name !== source.name);
+				if (outfitReferences.length > 0) {
+					setOutfits(<section>
+						<h2>Outfits</h2>
+						This license is required to purchase the following outfits:
+						<ReferenceLinkList sources={myReferences} categoryType='outfit'/>
+					</section>);
+				} else {
+					setOutfits(<section>
+						<h2>Outfits</h2>
+						This license isn't required to purchase any outfits.
+					</section>);
+				}
+			});
 		}
 	}
 	return outfits;
@@ -443,22 +466,37 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 	let [ships, setShips] = useState(undefined as ReactElement | undefined | null);
 	if (ships === undefined) {
 		if (source.type === 'outfit') {
-			getReferences(source.type).then(references => {
-				const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
+			getReferences(isLicense(source) ? 'license' : source.type).then(references => {
+				const myReferences: ReferenceSource[] = references[getLicenseName(source)] ?? [];
 				const shipReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'ship');
-				if (shipReferences.length > 0) {
-					setShips(<section>
-						<h2>Ships</h2>
-						<details>
-							<summary>This outfit is installed on {shipReferences.length} stock {shipReferences.length === 1 ? 'ship' : 'ships'}:</summary>
+				if (isLicense(source)) {
+					if (shipReferences.length > 0) {
+						setShips(<section>
+							<h2>Ships</h2>
+							This license is required to purchase the following ships:
 							<ReferenceLinkList sources={shipReferences} categoryType='ship'/>
-						</details>
-					</section>);
+						</section>);
+					} else {
+						setShips(<section>
+							<h2>Ships</h2>
+							This license isn't required to purchase any ships.
+						</section>);
+					}
 				} else {
-					setShips(<section>
-						<h2>Ships</h2>
-						This outfit isn't installed on any ship.
-					</section>);
+					if (shipReferences.length > 0) {
+						setShips(<section>
+							<h2>Ships</h2>
+							<details>
+								<summary>This outfit is installed on {shipReferences.length} stock {shipReferences.length === 1 ? 'ship' : 'ships'}:</summary>
+								<ReferenceLinkList sources={shipReferences} categoryType='ship'/>
+							</details>
+						</section>);
+					} else {
+						setShips(<section>
+							<h2>Ships</h2>
+							This outfit isn't installed on any ship.
+						</section>);
+					}
 				}
 			});
 		} else if (source.type === 'shipyard') {
@@ -469,13 +507,35 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 				setShips(<section>
 						<h2>Ships</h2>
 						{ships.length > 0 ?
-							<>Ships sold here:<ReferenceLinkList sources={ships.map(outfit => new ReferenceSource('ship', outfit))} categoryType={'ship'}/></>
+							<>Ships sold here:<ReferenceLinkList sources={ships.map(ship => new ReferenceSource('ship', ship))} categoryType='ship'/></>
 							: "This shipyard doesn't sell any ships."}
 						{['location', 'stock', 'to sell'].some(key => data.getData()[key]) ?
 							<p>This shipyard may sell other ships conditionally.</p>
 							: undefined}
 					</section>
 				);
+			});
+		} else if (source.type === 'fleet') {
+			getData(source).then(data => {
+				const variants = data.getData()['variant'] ?? [];
+				const variantArray = (variants instanceof Array) ? variants : [variants];
+				if (variants.length > 0) {
+					setShips(<section>
+						<h2>Ships</h2>
+						This fleet has the following variants:
+						{variantArray.map((variant, index) =>
+							<ReferenceLinkList key={index.toString()}
+											   sources={Object.keys(variant).filter(s => s !== 'name').map(ship => new ReferenceSource('ship', ship))}
+											   counts={Object.keys(variant).filter(s => s !== 'name').map(ship => (typeof (variant[ship]) === 'string' ? Number.parseInt(variant[ship]) : 1))}
+							/>
+						)}
+					</section>);
+				} else {
+					setShips(<section>
+						<h2>Ships</h2>
+						This fleet doesn't have any ships.
+					</section>);
+				}
 			});
 		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
 			getReferences(source.type).then(references => {
@@ -504,22 +564,27 @@ export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 	let [outfitters, setOutfitters] = useState(undefined as ReactElement | undefined);
 	if (!outfitters) {
 		if (source.type === 'outfit') {
-			getReferences(source.type).then(references => {
-				const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-				const outfitterReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'outfitter');
-				if (outfitterReferences.length > 0) {
-					setOutfitters(<section>
-						<h2>Outfitters</h2>
-						This outfit is sold in the following outfitters:
-						<ReferenceLinkList sources={outfitterReferences}/>
-					</section>)
-				} else {
-					setOutfitters(<section>
-						<h2>Outfitters</h2>
-						This outfit isn't sold by any outfitters.
-					</section>)
-				}
-			})
+			if(isLicense(source)) {
+				setOutfitters(<></>);
+			}
+			else {
+				getReferences(source.type).then(references => {
+					const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
+					const outfitterReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'outfitter');
+					if (outfitterReferences.length > 0) {
+						setOutfitters(<section>
+							<h2>Outfitters</h2>
+							This outfit is sold in the following outfitters:
+							<ReferenceLinkList sources={outfitterReferences}/>
+						</section>)
+					} else {
+						setOutfitters(<section>
+							<h2>Outfitters</h2>
+							This outfit isn't sold by any outfitters.
+						</section>)
+					}
+				});
+			}
 		} else if (source.type === 'planet') {
 			getData(source).then(data => {
 				let myOutfitters: string | string[] = data.getData()['outfitter'] ?? [];

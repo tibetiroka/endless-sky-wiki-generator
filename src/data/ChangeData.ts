@@ -1,4 +1,4 @@
-import {CommitData} from "./CommitData";
+import {CommitData} from "./CommitData.ts";
 
 export class DiffData {
 	added: boolean = false;

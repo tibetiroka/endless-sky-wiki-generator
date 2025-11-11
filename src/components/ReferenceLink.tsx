@@ -10,7 +10,7 @@
 
 import {ReferenceData, ReferenceSource, toURL} from "../data/ReferenceSource.ts";
 import {useState} from "react";
-import {getData, getDisplayName, getReferences} from "../data/DataFetcher.tsx";
+import {getData, getDisplayName, getReferences} from "../data/DataFetcher.ts";
 import {findSource} from "../utils.ts";
 
 type ReferenceLinkProps = { source: ReferenceSource, displayName: string, count?: number };

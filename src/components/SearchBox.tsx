@@ -16,6 +16,25 @@ import {equals} from "../utils.ts";
 
 export const CUSTOM_PAGES: ReferenceSourceIndex = new ReferenceSourceIndex();
 
+function filterIndex(index: readonly IndexEntry[]): IndexEntry[] {
+	function isUnsupported(source: ReferenceSource): boolean {
+		return source.type === 'license';
+	}
+
+	return index
+		.map(entry => {
+			if (entry.value.some(isUnsupported)) {
+				const newEntry = new IndexEntry();
+				newEntry.key = entry.key;
+				newEntry.value = entry.value.filter(v => !isUnsupported(v));
+				return newEntry;
+			} else {
+				return entry;
+			}
+		})
+		.filter(entry => entry.value.length > 0);
+}
+
 export const SearchBox = () => {
 	const [filteredSuggestions, setFilteredSuggestions] = useState(new Array<IndexEntry>());
 	const [inputValue, setInputValue] = useState('');
@@ -45,7 +64,7 @@ export const SearchBox = () => {
 		setInputValue(inputValue);
 
 		// Filter suggestions based on input value
-		const fuse = new Fuse(data.getIndex(), {
+		const fuse = new Fuse(filterIndex(data.getIndex()), {
 			keys: ['key'],
 			threshold: 0.1,
 			ignoreDiacritics: true,

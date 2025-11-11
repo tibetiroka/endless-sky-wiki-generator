@@ -95,9 +95,18 @@ table td:has(img.image-display) {
 	text-align: center;
 }
 
-img.image-display {
+.image-display {
+	min-width: 125px;
+	min-height: 125px;
 	max-width: 250px;
 	max-height: 250px;
+	margin-left: auto;
+	margin-right: auto;
+	animation-iteration-count: infinite;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	animation-delay: 0s;
 }
 
 .changelog > * {

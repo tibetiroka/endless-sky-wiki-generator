@@ -1,8 +1,9 @@
 import {ObjectData} from "./ObjectData";
 import {getParts, ReferenceData, ReferenceSource} from "./ReferenceSource.ts";
 import {fetchData} from "../web_utils.ts";
-import {ChangeData} from "./ChangeData.tsx";
+import {ChangeData} from "./ChangeData.ts";
 import {findSource} from "../utils.ts";
+import {GameFileList} from "./GameFileList.ts";
 
 const ES_DATA_ROOT: string = "https://raw.githubusercontent.com/endless-sky/endless-sky/";
 const ES_HISTORY_ROOT: string = "https://github.com/endless-sky/endless-sky/commit/";
@@ -17,6 +18,10 @@ type DisplayNameData = { [U: string]: ReferenceSource[] };
 let DISPLAY_NAME_CACHE: Promise<DisplayNameData> =
 	fetchData('index/entries/display name', 1000 * 60 * 60 * 24)
 		.then(json => JSON.parse(json) as DisplayNameData);
+let FILE_LIST_CACHE: Promise<GameFileList> =
+	fetchData('data/files.json', 1000 * 60 * 60 * 24)
+		.then(json => JSON.parse(json) as string[])
+		.then(array => new GameFileList(array));
 
 export function getData(source: ReferenceSource): Promise<ObjectData> {
 	// example: <ROOT>/data/ship/data/Argosy
@@ -59,13 +64,17 @@ export function getDisplayName(source: ReferenceSource): Promise<string> {
 				return Promise.resolve(key);
 			}
 		}
-		return Promise.reject("No display name found");
-	})
+		return Promise.reject("No display name found for " + source.type + "/" + source.name);
+	});
 }
 
 export function getReferences(category: string): Promise<ReferenceData> {
 	return fetchData('index/references/' + category, 1000 * 60 * 60 * 24)
 		.then(value => JSON.parse(value) as ReferenceData);
+}
+
+export function getFileList(): Promise<GameFileList> {
+	return FILE_LIST_CACHE;
 }
 
 export function getEsUrl(path: string, ref: string = ES_DEFAULT_REF): URL {

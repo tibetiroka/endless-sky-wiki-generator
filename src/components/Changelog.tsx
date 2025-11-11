@@ -8,8 +8,8 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {BulkChangeData, ChangeData} from '../data/ChangeData.tsx'
-import {getCommitURL} from "../data/DataFetcher.tsx";
+import {BulkChangeData, ChangeData} from '../data/ChangeData.ts'
+import {getCommitURL} from "../data/DataFetcher.ts";
 import Patch from "./Patch.tsx";
 
 type ChangelogProps = { entries: ChangeData[] | BulkChangeData[] }
