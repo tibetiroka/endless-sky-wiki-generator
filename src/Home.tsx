@@ -36,7 +36,9 @@ function Home() {
 		</section>
 		<section className='home-changelog'>
 			<h2>Recent game activity</h2>
-			{changelog}
+			<div className='changelog'>
+				{changelog}
+			</div>
 		</section>
 	</>;
 }
