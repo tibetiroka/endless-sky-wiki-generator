@@ -6,17 +6,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 jobs:
   deploy:
     name: Deploy Github Pages
     runs-on: ubuntu-latest
     steps:
-      - id: build-publish
-        uses: bitovi/github-actions-react-to-github-pages@v1.2.4
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v6
+      - name: Build
+        run: npm install && npm run build
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: build
-          install_command: 'npm install'
+          folder: build
