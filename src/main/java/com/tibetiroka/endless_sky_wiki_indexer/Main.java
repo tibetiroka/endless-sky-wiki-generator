@@ -33,7 +33,7 @@ public class Main implements Callable<Integer> {
 	@Parameters(index = "1", description = "The directory where the JSON indices should be generated.")
 	private File output;
 	@Option(names = {"-c", "--required-children"}, description = "Required children for top-level nodes to be indexed in the auto-generated data.")
-	private Map<String, Set<String>> requiredChildren = Map.of("outfit", Set.of("description"), "ship", Set.of("description"));
+	private Map<String, Set<String>> requiredChildren = Map.of("outfit", Set.of("description", "category", "series", "thumbnail"), "ship", Set.of("description"));
 
 	public static void main(String[] args) {
 		int exitCode = new CommandLine(new Main()).execute(args);
@@ -139,10 +139,8 @@ public class Main implements Callable<Integer> {
 		Map<String, ?> data = (Map<String, ?>) map.get("data");
 
 		if(requiredChildren.containsKey(topLevel)) {
-			for(String key : requiredChildren.get(topLevel)) {
-				if(data.get(key) == null) {
-					return;
-				}
+			if(requiredChildren.get(topLevel).stream().allMatch(key -> data.get(key) == null)) {
+				return;
 			}
 		}
 
