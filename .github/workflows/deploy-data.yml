@@ -69,7 +69,7 @@ jobs:
       - name: Overwrite deployment data
         run: |
           rm *
-          cp /tmp/es-wiki-data/* .
+          cp -r /tmp/es-wiki-data/* .
       - name: Commit deployment data
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
