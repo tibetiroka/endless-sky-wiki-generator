@@ -196,6 +196,8 @@
 								</goals>
 								<phase>package</phase>
 								<configuration>
+									<finalName>endless-sky-indexer</finalName>
+									<appendAssemblyId>false</appendAssemblyId>
 									<archive>
 										<manifest>
 											<addClasspath>true</addClasspath>
