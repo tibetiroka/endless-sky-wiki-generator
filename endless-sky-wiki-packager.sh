@@ -47,14 +47,15 @@ function compress_bulk() {
 
 check_command gzip tar rm find mkdir echo realpath shopt pwd cd
 
-if [ "$#" != "3" ]; then
+if [ "$#" != "4" ]; then
 	echo "Incorrect number of parameters" 1>&2
 	exit 1
 fi
 
 generated_dir="$1"
 index_dir="$2"
-output="$3"
+assets_dir="$3"
+output="$4"
 
 mkdir -p "$output/index"
 mkdir -p "$output/data"
@@ -63,3 +64,8 @@ compress_each "$index_dir/entries" "$output/index/entries"
 compress_each "$index_dir/references" "$output/index/references"
 
 compress_each "$generated_dir" "$output/data"
+
+if [ -d "$output/assets" ]; then
+	rm -rf "$output/assets"
+fi
+mv "$assets_dir" "$output/assets"

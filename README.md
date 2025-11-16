@@ -11,7 +11,7 @@ This tool is written in Bash. You may need to install additional tools; the scri
 
 To get started with the tool, specify the location of the auto-generated wiki files, the hand-made wiki files, and an output directory:
 ```bash
-./endless-sky-wiki-packager.sh <wiki-generated-dir> <index-dir> <index-output-dir>
+./endless-sky-wiki-packager.sh <wiki-generated-dir> <index-dir> <assets-dir> <output-dir>
 ```
 
 You can also use `/dev/null` as an input if you want to skip it.
