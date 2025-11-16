@@ -467,8 +467,8 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 	if (ships === undefined) {
 		if (source.type === 'outfit') {
 			getReferences(isLicense(source) ? 'license' : source.type).then(references => {
-				const myReferences: ReferenceSource[] = references[getLicenseName(source)] ?? [];
-				const shipReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'ship');
+				const myReferences: ReferenceSource[] = references[isLicense(source) ? getLicenseName(source) : source.name as string] ?? [];
+				const shipReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'ship')
 				if (isLicense(source)) {
 					if (shipReferences.length > 0) {
 						setShips(<section>

@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ReferenceData, ReferenceSource, toURL} from "../data/ReferenceSource.ts";
+import {getLicenseName, isLicense, ReferenceData, ReferenceSource, toURL} from "../data/ReferenceSource.ts";
 import {useState} from "react";
 import {getData, getDisplayName, getReferences} from "../data/DataFetcher.ts";
 import {findSource} from "../utils.ts";
@@ -35,6 +35,7 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 	let [displayNames, setDisplayNames] = useState(undefined as string[] | undefined);
 	let [categories, setCategories] = useState(undefined as string[] | undefined);
 	let [references, setReferences] = useState(undefined as ReferenceData | undefined);
+	let [parents, setParents] = useState(undefined as (ReferenceSource | undefined)[] | undefined);
 
 	if (!displayNames && !props.categoryType) {
 		Promise.all(props.sources.map(source => getDisplayName(source))).then(data => setDisplayNames(data));
@@ -51,9 +52,24 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 			.then(data => setReferences(data));
 	}
 
+	if (!parents && props.categoryType === 'ship') {
+		getReferences(props.categoryType)
+			.then(references => {
+				setParents(props.sources.map(source => {
+					for (let key in references) {
+						if(findSource(source, references[key]) !== null) {
+							return new ReferenceSource('ship', key);
+						}
+					}
+					return undefined;
+				}));
+			});
+	}
+
 	function filterElements(filter: ReferenceSource[]): { source: ReferenceSource, index: number }[] {
 		return props.sources.flatMap((source, index) => {
-			if (findSource(source, filter) !== null) {
+			const currParents = parents as (ReferenceSource | undefined)[];
+			if (findSource(source, filter) !== null || (parents && currParents[index] && findSource(currParents[index], filter))) {
 				return [{source, index}];
 			}
 			return [];

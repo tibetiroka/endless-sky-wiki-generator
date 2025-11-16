@@ -99,7 +99,7 @@ div.animation-display-div * {
 	margin: 0;
 }
 
-table td:has(img.animation-display) {
+table td:has(.animation-display) {
 	text-align: center;
 }
 
@@ -160,6 +160,8 @@ table td:has(img.animation-display) {
 
 /* footer */
 footer {
+	overflow: hidden;
+	clear: both;
 	margin-top: auto;
 	margin-bottom: 0;
 	border-top: solid 1px;
