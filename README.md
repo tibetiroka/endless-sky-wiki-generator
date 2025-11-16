@@ -13,6 +13,7 @@ This repository houses the semi-official Endless Sky wiki, alongside various too
 - `packager`: Runs the above tools and packages the results to web-friendly formats.
   - The raw JSON files are compressed with gzip (which is supported by the JS compression streams API).
   - Some data files are tarballed together so the client doesn't have to download that many files.
-- `deploy`: The current state of the wiki, with all the data and web pages generated.
+- `deploy`: The data files for the current state of the wiki.
+- `gh_pages`: The deployment files for the wiki website itself.
 
 For more details on these tools, visit each of the branches.

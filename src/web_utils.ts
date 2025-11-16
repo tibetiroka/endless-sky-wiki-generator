@@ -12,7 +12,7 @@ import {ReferenceSource} from "./data/ReferenceSource.ts";
 
 export const HOST_ORIGIN: string = 'endless-sky-wiki.github.io';
 export const DATA_ORIGIN: string = isHostedOnLocalhost() ? 'http://localhost:8080/'
-	: 'https://raw.githubusercontent.com/tibetiroka/endless-sky-wiki-generator/refs/heads/deployment/';
+	: 'https://raw.githubusercontent.com/tibetiroka/endless-sky-wiki-generator/refs/heads/deploy/';
 
 export function isHostedOnLocalhost(hostname: string = window.location.hostname): boolean {
 	return hostname === 'localhost';

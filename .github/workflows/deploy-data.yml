@@ -1,0 +1,72 @@
+name: Deploy data files
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy data files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '23'
+          cache: 'maven'
+
+      - name: Checkout changelog-generator
+        uses: actions/checkout@v5
+        with:
+          ref: changelog-generator
+      - name: Build changelog-generator
+        run: mvn -P portable package --file pom.xml
+      - name: Run changelog-generator
+        run: java -jar -XX:+UseStringDeduplication target/endless-sky-changelog-generator.jar
+
+      - name: Checkout indexer
+        uses: actions/checkout@v5
+        with:
+          ref: indexer
+      - name: Build indexer
+        run: mvn -P portable package --file pom.xml
+      - name: Run indexer
+        run: java -jar target/endless-sky-wiki-indexer.jar /tmp/es-wiki-diff /tmp/es-wiki-index
+
+      - name: Checkout animation-creator
+        uses: actions/checkout@v5
+        with:
+          ref: animation-creator
+      - name: Build animation-creator
+        run: mvn -P portable package --file pom.xml
+      - name: Run animation-creator
+        run: java -jar target/endless-sky-wiki-animation-creator.jar /tmp/es-wiki-diff /tmp/endless-sky /tmp/es-wiki-animations
+
+      - name: Checkout packager
+        uses: actions/checkout@v5
+        with:
+          ref: packager
+      - name: Run packager
+        run: bash ./endless-sky-wiki-packager.sh /tmp/es-wiki-diff /tmp/es-wiki-index /tmp/es-wiki-animations /tmp/es-wiki-data
+
+      - name: Checkout deployment branch
+        uses: actions/checkout@v5
+        with:
+          ref: deploy
+          fetch-depth: '0'
+      - name: Overwrite deployment data
+        run: |
+          rm *
+          cp /tmp/es-wiki-data/* .
+      - name: Commit deployment data
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          branch: deploy
