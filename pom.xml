@@ -196,7 +196,7 @@
 								</goals>
 								<phase>package</phase>
 								<configuration>
-									<finalName>endless-sky-indexer</finalName>
+									<finalName>${project.artifactId}</finalName>
 									<appendAssemblyId>false</appendAssemblyId>
 									<archive>
 										<manifest>
