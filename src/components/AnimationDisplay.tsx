@@ -9,6 +9,7 @@
  */
 
 import {getDataUrl} from "../web_utils.ts";
+import {getEsUrl} from "../data/DataFetcher.ts"
 
 type AnimationDisplayProps = { source: string };
 
@@ -18,16 +19,8 @@ export function AnimationDisplay(props: AnimationDisplayProps) {
 	}
 
 	return <div className='animation-display-wrapper'>
-		<video className='animation-display' src={getDataUrl('assets/' + props.source).toString()} loop autoPlay muted onError={(error) => {
-			(error.target as any).style.display = 'none';
-		}} onLoad={event => {
-			const target: any = event.target;
-			target.muted = true;
-			target.defaultMuted = true;
-			target.play();
-		}}/>
 		<img className='animation-display' src={getDataUrl('assets/' + props.source).toString()} alt='' onError={(error) => {
-			(error.target as any).style.display = 'none';
+			(error.target as any).src = getEsUrl('images/outfit/unknown.png').toString();
 		}}/>
 	</div>
 }

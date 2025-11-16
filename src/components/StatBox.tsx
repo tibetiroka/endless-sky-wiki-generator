@@ -216,6 +216,7 @@ function CombinedImageDisplay(props: CombinedImageDisplayProps) {
 		</Tabs>
 	} else if (existingImages.length === 1) {
 		return <AnimationDisplay source={existingImages[0].animation as string}></AnimationDisplay>
+	} else {
+		return <AnimationDisplay source={'outfits/cloaking device/sprite'}></AnimationDisplay>
 	}
-	return undefined;
 }
