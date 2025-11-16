@@ -10,7 +10,7 @@ import Home from "./Home";
 import Changelog from "./Changelog";
 import {ReferenceSource} from "./data/ReferenceSource.ts";
 import WikiPage from "./WikiPage.tsx";
-import {getCurrentSource, isOfficial} from "./web_utils.ts";
+import {getCurrentSource, isOfficial, HOME_PATH} from "./web_utils.ts";
 
 // @ts-ignore
 const domRoot = ReactDOM.createRoot(document.getElementById('root'));
@@ -20,11 +20,11 @@ domRoot.render(
 		<BrowserRouter>
 			<Routes>
 				{/*@ts-ignore*/}
-				<Route exact path="/" Component={SharedLayout}>
+				<Route exact path={HOME_PATH} Component={SharedLayout}>
 					{/*@ts-ignore*/}
 					<Route index Component={Home}/>
 					{/*@ts-ignore*/}
-					<Route exact path="/changelog" Component={Changelog}/>
+					<Route exact path="changelog" Component={Changelog}/>
 					<Route path="*" Component={DynamicRoute}/>
 				</Route>
 			</Routes>

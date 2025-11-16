@@ -10,9 +10,10 @@
 
 import {ReferenceSource} from "./data/ReferenceSource.ts";
 
-export const HOST_ORIGIN: string = 'tibetiroka.github.io/endless-sky-wiki-generator';
+export const HOME_PATH: string = 'endless-sky-wiki-generator';
+export const HOST_ORIGIN: string = 'tibetiroka.github.io';
 export const DATA_ORIGIN: string = isHostedOnLocalhost() ? 'http://localhost:8080/'
-	: 'https://raw.githubusercontent.com/tibetiroka/endless-sky-wiki-generator/refs/heads/deploy/';
+	: 'https://raw.githubusercontent.com/tibetiroka/' + HOME_PATH + '/refs/heads/deploy/';
 
 export function isHostedOnLocalhost(hostname: string = window.location.hostname): boolean {
 	return hostname === 'localhost';
@@ -38,10 +39,10 @@ export function getPath(relativeTo: string = '', pathname: string = decodeURICom
 	return '';
 }
 
-export function getCurrentSource(relativeTo: string = isHostedOnLocalhost() ? '' : 'endless-sky-wiki-generator', pathname: string = decodeURIComponent(window.location.pathname)): ReferenceSource {
+export function getCurrentSource(relativeTo: string = HOME_PATH, pathname: string = decodeURIComponent(window.location.pathname)): ReferenceSource {
 	let path: string = getPath(relativeTo, pathname);
 	path = path.replace(/^\/+/, '').replace(/\/+$/, '');
-	const parts: string[] = path.split('/');
+	const parts: string[] = path.split('/').filter(s=>s.length > 0);
 	if (parts.length === 0) {
 		return new ReferenceSource('main', null);
 	} else if (parts.length === 1) {

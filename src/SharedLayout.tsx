@@ -6,6 +6,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import {SearchBox} from "./components/SearchBox.tsx";
 // @ts-ignore
 import logo from './logo512.png';
+import {HOME_PATH} from "./web_utils.ts";
 
 function Logo() {
 	return <img alt="logo" className="logo" src={logo}/>
@@ -36,7 +37,7 @@ function SharedLayout() {
 		<header>
 			<Navbar expand="md" className="navbar">
 				<Container className="fs-5 align-items-md-center">
-					<Navbar.Brand href="/"><Logo/></Navbar.Brand>
+					<Navbar.Brand href={'/' + HOME_PATH}><Logo/></Navbar.Brand>
 					<Navbar.Toggle aria-controls="basic-navbar-nav"/>
 					<Navbar.Collapse id="basic-navbar-nav">
 						<SearchBox/>

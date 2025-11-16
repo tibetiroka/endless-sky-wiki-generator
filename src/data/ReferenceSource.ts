@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {getDomainWithProtocol} from "../web_utils.ts";
+import {getDomainWithProtocol, HOME_PATH} from "../web_utils.ts";
 import {equals} from "../utils.ts";
 
 export class ReferenceSource {
@@ -59,9 +59,9 @@ export function typeToString(source: ReferenceSource): string {
 
 export function toURL(source: ReferenceSource): URL {
 	if (source.name === null) {
-		return new URL(source.type, getDomainWithProtocol());
+		return new URL(HOME_PATH + '/' + source.type, getDomainWithProtocol());
 	} else {
-		return new URL(getDomainWithProtocol().toString() + '/' + encodeURIComponent(source.type) + '/' + encodeURIComponent(source.name));
+		return new URL(getDomainWithProtocol().toString() + '/' + HOME_PATH + '/' + encodeURIComponent(source.type) + '/' + encodeURIComponent(source.name));
 	}
 }
 

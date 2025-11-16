@@ -33,6 +33,7 @@ import {ChangeData} from "./data/ChangeData.ts";
 import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
 import {Changelog} from "./components/Changelog.tsx";
 import {StatBox} from "./components/StatBox.tsx";
+import {HOME_PATH} from "./web_utils.ts";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -105,7 +106,7 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 							: <><small style={{fontStyle: "italic"}}>Internally: {source.name}</small><br/></>}
 					</>);
 			}).catch(() => {
-				setHeading(<Navigate to={{pathname: '/'}}/>);
+				setHeading(<Navigate to={{pathname: '/' + HOME_PATH}}/>);
 			});
 		}
 	}
