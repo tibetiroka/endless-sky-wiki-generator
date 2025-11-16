@@ -138,7 +138,7 @@
 								</goals>
 								<phase>package</phase>
 								<configuration>
-									<finalName>endless-sky-animation-creator</finalName>
+									<finalName>${project.artifactId}</finalName>
 									<appendAssemblyId>false</appendAssemblyId>
 									<archive>
 										<manifest>
