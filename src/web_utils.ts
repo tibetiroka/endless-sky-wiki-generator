@@ -30,7 +30,7 @@ export function getDomainWithProtocol(protocol: string = window.location.protoco
 	return (protocol.endsWith(':') ? protocol : protocol + ':') + '//' + baseDomain + (window.location.port.length > 0 ? ':' + window.location.port : '')
 }
 
-export function getPath(relativeTo: string = '', pathname: string = decodeURI(window.location.pathname)): string {
+export function getPath(relativeTo: string = '', pathname: string = decodeURIComponent(window.location.pathname)): string {
 	if (pathname.startsWith('/')) {
 		return pathname.substring(relativeTo.length + (relativeTo.startsWith('/') ? 0 : 1));
 	}
@@ -38,7 +38,7 @@ export function getPath(relativeTo: string = '', pathname: string = decodeURI(wi
 	return '';
 }
 
-export function getCurrentSource(relativeTo: string = '', pathname: string = decodeURI(window.location.pathname)): ReferenceSource {
+export function getCurrentSource(relativeTo: string = '', pathname: string = decodeURIComponent(window.location.pathname)): ReferenceSource {
 	let path: string = getPath(relativeTo, pathname);
 	path = path.replace(/^\/+/, '').replace(/\/+$/, '');
 	const parts: string[] = path.split('/');
