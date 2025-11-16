@@ -138,6 +138,8 @@
 								</goals>
 								<phase>package</phase>
 								<configuration>
+									<finalName>endless-sky-animation-creator</finalName>
+									<appendAssemblyId>false</appendAssemblyId>
 									<archive>
 										<manifest>
 											<addClasspath>true</addClasspath>
