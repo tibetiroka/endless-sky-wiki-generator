@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {getLicenseName, isLicense, ReferenceData, ReferenceSource, toURL} from "../data/ReferenceSource.ts";
+import {ReferenceData, ReferenceSource, toURL} from "../data/ReferenceSource.ts";
 import {useState} from "react";
 import {getData, getDisplayName, getReferences} from "../data/DataFetcher.ts";
 import {findSource} from "../utils.ts";
@@ -57,7 +57,7 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 			.then(references => {
 				setParents(props.sources.map(source => {
 					for (let key in references) {
-						if(findSource(source, references[key]) !== null) {
+						if (findSource(source, references[key]) !== null) {
 							return new ReferenceSource('ship', key);
 						}
 					}
