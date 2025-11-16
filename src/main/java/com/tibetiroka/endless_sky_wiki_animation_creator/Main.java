@@ -129,7 +129,7 @@ public class Main {
 						command.add("-framerate");
 						command.add(Double.toString(1. / animation.timePerFrame));
 
-						File output = new File(outputDir, name + ".mp4");
+						File output = new File(outputDir, name + ".apng");
 						output.getParentFile().mkdirs();
 						command.add(output.getAbsolutePath());
 						try {
@@ -140,7 +140,7 @@ public class Main {
 							if(code != 0) {
 								System.exit(code);
 							}
-							Files.move(output.toPath(), new File(output.getParentFile(), output.getName().substring(0, output.getName().lastIndexOf('.'))).toPath());
+							Files.move(output.toPath(), new File(output.getParentFile(), output.getName().substring(0, output.getName().lastIndexOf('.'))).toPath(), StandardCopyOption.REPLACE_EXISTING);
 						} catch(IOException | InterruptedException e) {
 							throw new RuntimeException(e);
 						}
