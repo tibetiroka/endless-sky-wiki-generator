@@ -17,7 +17,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v6
       - name: Build
-        run: npm install && npm run build
+        run: npm install && npm run build && touch build/.nojekyll
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
