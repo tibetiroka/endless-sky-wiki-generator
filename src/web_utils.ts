@@ -59,8 +59,12 @@ export function isOfficial(href: string = window.location.href): boolean {
 	return isHostedOnLocalhost(href) || isHostedOn(HOST_ORIGIN, href);
 }
 
+export function getDataUrl(path: string): URL {
+	return new URL(DATA_ORIGIN.toString() + encodeURIComponent(path));
+}
+
 export function fetchData(path: string, cacheLifeMs: number = 1000 * 60 * 60 * 5): Promise<string> {
-	const url: URL = new URL(DATA_ORIGIN.toString() + encodeURIComponent(path));
+	const url: URL = getDataUrl(path);
 	const cacheDate = localStorage.getItem(path + "|date");
 	// check if there is a cached value
 	if (cacheLifeMs > 0 && cacheDate !== null) {

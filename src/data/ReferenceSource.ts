@@ -21,6 +21,10 @@ export class ReferenceSource {
 	}
 }
 
+export function toString(source: ReferenceSource): string {
+	return source.type + '/' + (source.name as string);
+}
+
 export function isLicense(source: ReferenceSource): boolean {
 	return source.type === 'outfit' && (source.name?.endsWith(" License") ?? false);
 }

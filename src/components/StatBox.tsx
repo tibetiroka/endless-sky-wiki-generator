@@ -12,7 +12,8 @@ import {ReferenceSource} from "../data/ReferenceSource.ts";
 import {getData} from "../data/DataFetcher.ts";
 import {ReactElement, useState} from "react";
 import {ObjectData} from "../data/ObjectData.ts";
-import {Animation, AnimationDisplay} from "./AnimationDisplay.tsx"
+import {AnimationDisplay} from "./AnimationDisplay.tsx"
+import {toString} from "../data/ReferenceSource.ts";
 import {Tab, Tabs} from "react-bootstrap";
 
 type StatBoxProps = { elements: ReferenceSource[] }
@@ -202,19 +203,19 @@ export function StatBox(props: StatBoxProps) {
 type CombinedImageDisplayProps = { data: ObjectData };
 
 function CombinedImageDisplay(props: CombinedImageDisplayProps) {
-	const images: { name: string, animation?: Animation }[] = [];
-	images.push({name: 'Thumbnail', animation: props.data.getData()['thumbnail']});
-	images.push({name: 'Overhead', animation: props.data.getData()['sprite']});
+	const images: { name: string, animation?: string }[] = [];
+	images.push({name: 'Thumbnail', animation: props.data.getData()['thumbnail'] ? toString(props.data.getSource()) + '/thumbnail' : undefined});
+	images.push({name: 'Overhead', animation: props.data.getData()['sprite'] ? toString(props.data.getSource()) + '/sprite' : undefined});
 
 	const existingImages = images.filter(image => image.animation);
 	if (existingImages.length > 1) {
 		return <Tabs className='combined-image-display-tabs'>
 			{existingImages.map(image => <Tab key={image.name} eventKey={image.name} title={image.name}>
-				<AnimationDisplay animation={image.animation as Animation}/>
+				<AnimationDisplay source={image.animation as string}/>
 			</Tab>)}
 		</Tabs>
 	} else if (existingImages.length === 1) {
-		return <AnimationDisplay animation={existingImages[0].animation as Animation}></AnimationDisplay>
+		return <AnimationDisplay source={existingImages[0].animation as string}></AnimationDisplay>
 	}
 	return undefined;
 }

@@ -91,11 +91,19 @@ div.side-stat-box {
 	padding: 10px;
 }
 
-table td:has(img.image-display) {
+div.animation-display-div * {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 0;
+	margin: 0;
+}
+
+table td:has(img.animation-display) {
 	text-align: center;
 }
 
-.image-display {
+.animation-display {
 	min-width: 125px;
 	min-height: 125px;
 	max-width: 250px;
