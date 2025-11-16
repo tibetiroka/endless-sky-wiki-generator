@@ -126,13 +126,16 @@ public class Main {
 						}).toList()) + "concat=n=" + frameCount + ":v=1:a=0[out]");
 						command.add("-map");
 						command.add("[out]");
+						command.add("-loop");
+						command.add("0");
 						command.add("-framerate");
 						command.add(Double.toString(1. / animation.timePerFrame));
 
-						File output = new File(outputDir, name + ".apng");
+						File output = new File(outputDir, name + ".webp");
 						output.getParentFile().mkdirs();
 						command.add(output.getAbsolutePath());
 						try {
+							System.out.println(String.join(" ", command));
 							int code = new ProcessBuilder(command)
 									.inheritIO()
 									.start()
