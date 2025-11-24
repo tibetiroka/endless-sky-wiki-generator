@@ -8,12 +8,11 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ReferenceSource} from "../data/ReferenceSource.ts";
+import {ReferenceSource, toString} from "../data/ReferenceSource.ts";
 import {getData} from "../data/DataFetcher.ts";
 import {ReactElement, useState} from "react";
 import {ObjectData} from "../data/ObjectData.ts";
 import {AnimationDisplay} from "./AnimationDisplay.tsx"
-import {toString} from "../data/ReferenceSource.ts";
 import {Tab, Tabs} from "react-bootstrap";
 
 type StatBoxProps = { elements: ReferenceSource[] }
@@ -53,7 +52,7 @@ export function StatBox(props: StatBoxProps) {
 			.join(' ');
 	}
 
-	function StatRow(hideIfDefault: boolean, attribute: string, name?: string, weapon: boolean = false, computeMode?: string, defaultValue: any = '0') {
+	function StatRow(hideIfDefault: boolean, attribute: string, name?: string, source: string[] = ['attributes'], computeMode?: string, defaultValue: any = '0') {
 		if (!name) {
 			name = capitalizeWords(attribute);
 		}
@@ -61,31 +60,28 @@ export function StatBox(props: StatBoxProps) {
 		function getValues() {
 			return data?.map(object => {
 				const attributes = object.getData()['attributes'] ?? object.getData();
-				let result;
-				if (weapon && !attributes['weapon']) {
+				let dataSource: any = object.getData();
+				source.forEach(s => dataSource = dataSource ? dataSource[s] : dataSource);
+				if (!dataSource) {
 					return defaultValue;
 				}
-				if (weapon) {
-					result = attributes['weapon'][attribute] ?? defaultValue;
-					if (computeMode) {
-						result = Number.parseFloat(result);
-						if (computeMode === 'lifetime') {
-							result *= Number.parseFloat(attributes['weapon']['lifetime']);
-						} else if (computeMode === 'per second') {
-							const multiplier = 60. / Number.parseFloat(attributes['weapon']['reload']);
-							if (attribute === 'reload') {
-								if (multiplier === 60 && Number.parseFloat(attributes['weapon']['lifetime']) <= 1.0) {
-									result = 'continuous';
-								} else {
-									result = multiplier;
-								}
+				let result = dataSource ? (dataSource[attribute] ?? defaultValue) : defaultValue;
+				if (computeMode) {
+					result = Number.parseFloat(result);
+					if (computeMode === 'lifetime') {
+						result *= Number.parseFloat(attributes['weapon']['lifetime']);
+					} else if (computeMode === 'per second') {
+						const multiplier = 60. / Number.parseFloat(attributes['weapon']['reload']);
+						if (attribute === 'reload') {
+							if (multiplier === 60 && Number.parseFloat(attributes['weapon']['lifetime']) <= 1.0) {
+								result = 'continuous';
 							} else {
-								result *= multiplier;
+								result = multiplier;
 							}
+						} else {
+							result *= multiplier;
 						}
 					}
-				} else {
-					result = attributes[attribute];
 				}
 				if (result) {
 					const parsed = Number.parseFloat(result);
@@ -121,7 +117,7 @@ export function StatBox(props: StatBoxProps) {
 			case 'ship': {
 				rows.push(StatRow(false, 'category', 'Class'));
 				rows.push(StatRow(false, 'cost', 'Hull Cost'));
-				rows.push(StatRow(false, 'total cost', 'Standard Cost'));
+				rows.push(StatRow(false, 'total cost', 'Standard Cost', []));
 				rows.push(StatRow(false, 'shields'));
 				rows.push(StatRow(false, 'hull'));
 				rows.push(StatRow(false, 'mass'));
@@ -149,9 +145,9 @@ export function StatBox(props: StatBoxProps) {
 				rows.push(StatRow(true, 'mass'));
 				rows.push(StatRow(false, 'outfit space'));
 				if (data.some(object => (object.getData()['attributes'] ?? object.getData())['weapon'])) {
-					rows.push(StatRow(true, 'velocity', 'Range', true, 'lifetime'));
-					rows.push(StatRow(true, 'firing force', undefined, true));
-					rows.push(StatRow(true, 'hit force', undefined, true));
+					rows.push(StatRow(true, 'velocity', 'Range', ['attributes', 'weapon'], 'lifetime'));
+					rows.push(StatRow(true, 'firing force', undefined, ['attributes', 'weapon']));
+					rows.push(StatRow(true, 'hit force', undefined, ['attributes', 'weapon']));
 					// extra weapon stats
 					const modes = ['per second', undefined];
 					for (const mode of modes) {
@@ -159,12 +155,12 @@ export function StatBox(props: StatBoxProps) {
 							<tr key={'header' + (mode ?? '')}>
 								<td className='header' colSpan={data.length + 1}>{capitalizeWords(mode ?? 'per shot')}</td>
 							</tr>)
-						rows.push(StatRow(false, 'shield damage', undefined, true, mode));
-						rows.push(StatRow(false, 'hull damage', undefined, true, mode));
-						rows.push(StatRow(false, 'firing energy', undefined, true, mode));
-						rows.push(StatRow(false, 'firing heat', undefined, true, mode));
+						rows.push(StatRow(false, 'shield damage', undefined, ['attributes', 'weapon'], mode));
+						rows.push(StatRow(false, 'hull damage', undefined, ['attributes', 'weapon'], mode));
+						rows.push(StatRow(false, 'firing energy', undefined, ['attributes', 'weapon'], mode));
+						rows.push(StatRow(false, 'firing heat', undefined, ['attributes', 'weapon'], mode));
 						if (mode) {
-							rows.push(StatRow(false, 'reload', 'Shots', true, mode));
+							rows.push(StatRow(false, 'reload', 'Shots', ['attributes', 'weapon'], mode));
 						}
 					}
 				}
@@ -204,8 +200,14 @@ type CombinedImageDisplayProps = { data: ObjectData };
 
 function CombinedImageDisplay(props: CombinedImageDisplayProps) {
 	const images: { name: string, animation?: string }[] = [];
-	images.push({name: 'Thumbnail', animation: props.data.getData()['thumbnail'] ? toString(props.data.getSource()) + '/thumbnail' : undefined});
-	images.push({name: 'Overhead', animation: props.data.getData()['sprite'] ? toString(props.data.getSource()) + '/sprite' : undefined});
+	images.push({
+		name: 'Thumbnail',
+		animation: props.data.getData()['thumbnail'] ? toString(props.data.getSource()) + '/thumbnail' : undefined
+	});
+	images.push({
+		name: 'Overhead',
+		animation: props.data.getData()['sprite'] ? toString(props.data.getSource()) + '/sprite' : undefined
+	});
 
 	const existingImages = images.filter(image => image.animation);
 	if (existingImages.length > 1) {
