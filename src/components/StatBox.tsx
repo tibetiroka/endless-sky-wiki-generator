@@ -121,7 +121,7 @@ export function StatBox(props: StatBoxProps) {
 			case 'ship': {
 				rows.push(StatRow(false, 'category', 'Class'));
 				rows.push(StatRow(false, 'cost', 'Hull Cost'));
-				rows.push(StatRow(false, 'cost', 'Standard Cost')); // todo: index costs?
+				rows.push(StatRow(false, 'total cost', 'Standard Cost'));
 				rows.push(StatRow(false, 'shields'));
 				rows.push(StatRow(false, 'hull'));
 				rows.push(StatRow(false, 'mass'));

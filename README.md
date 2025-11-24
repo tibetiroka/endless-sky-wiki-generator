@@ -8,6 +8,7 @@ This repository houses the semi-official Endless Sky wiki, alongside various too
   - This tool parses the entire commit history of the game, parses the data files, and generates JSON files from them.
   - You can use the output to access the latest version of any ship, outfit etc. data, or to view changes made in a specific release.
   - This tool is used to automatically generate the vast majority of the wiki contents and keep the stats up to date.
+- `data-resolver`: Resolves missing properties in the generated data, such as stats inherited from a ship's parent.
 - `indexer`: Indexes the contents of the wiki for client-side search.
   - This is what enables the search bar to function without any server-side queries.
 - `packager`: Runs the above tools and packages the results to web-friendly formats.

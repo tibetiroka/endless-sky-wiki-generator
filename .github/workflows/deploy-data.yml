@@ -36,6 +36,15 @@ jobs:
       - name: Run changelog-generator
         run: java -jar -XX:+UseStringDeduplication target/endless-sky-changelog-generator.jar
 
+      - name: Checkout data-resolver
+        uses: actions/checkout@v5
+        with:
+          ref: data-resolver
+      - name: Build data-resolver
+        run: mvn -P portable package --file pom.xml
+      - name: Run data-resolver
+        run: java -jar target/endless-sky-wiki-data-resolver.jar /tmp/es-wiki-diff
+
       - name: Checkout indexer
         uses: actions/checkout@v5
         with:
