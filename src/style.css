@@ -23,8 +23,8 @@
 .navbar > div > * {
 	margin-left: 5px;
 	margin-right: 5px;
-	padding-right: 0px;
-	padding-left: 0px;
+	padding-right: 0;
+	padding-left: 0;
 }
 
 .navbar form {
@@ -112,6 +112,7 @@ table td:has(.animation-display) {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
+	image-rendering: pixelated;
 }
 
 .changelog table {

@@ -60,11 +60,9 @@ export function StatBox(props: StatBoxProps) {
 		function getValues() {
 			return data?.map(object => {
 				let dataSource: any = object.getData();
-				console.log(dataSource);
 				for (const key of source) {
 					dataSource = (dataSource && dataSource[key]) ? dataSource[key] : dataSource;
 				}
-				console.log(dataSource);
 				let result = dataSource ? (dataSource[attribute] ?? defaultValue) : defaultValue;
 				if (computeMode) {
 					const attributes = object.getData()['attributes'] ?? object.getData();
