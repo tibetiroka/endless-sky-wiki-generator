@@ -6,10 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -105,7 +102,17 @@ public class Main {
 						     // Resolve missing entries
 						     parent.data.forEach((key, value) -> {
 							     if(!ship.data.containsKey(key)) {
-								     ship.data.put(key, value);
+									 if(value instanceof Map m) {
+										 ship.data.put(key, new HashMap<>(m));
+									 } else if(value.getClass().isArray()) {
+										 ship.data.put(key, Arrays.copyOf((Object[])value, ((Object[]) value).length));
+									 } else if(value instanceof List l) {
+										 ship.data.put(key, new ArrayList(l));
+									 } else if(value instanceof String s) {
+										 ship.data.put(key, s);
+									 } else {
+										 throw new IllegalArgumentException("Could not copy unexpected type " + value.getClass().getCanonicalName());
+									 }
 							     }
 						     });
 
@@ -128,6 +135,7 @@ public class Main {
 							     } else {
 								     removeSingle.accept(ship.data.get("remove"));
 							     }
+							     ship.data.remove("remove");
 						     }
 
 						     // Add extra attributes
@@ -163,6 +171,7 @@ public class Main {
 							     } else {
 								     addSingle.accept(ship.data.get("add"));
 							     }
+							     ship.data.remove("add");
 						     }
 
 						     ship.resolved = true;

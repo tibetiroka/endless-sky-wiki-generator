@@ -33,4 +33,16 @@ public class Data {
 	public String name() {
 		return (String) data.get("name");
 	}
+
+	@Override
+	public String toString() {
+		return "Data{" +
+		       "data=" + data +
+		       ", filename='" + filename + '\'' +
+		       ", lastCommit='" + lastCommit + '\'' +
+		       ", line=" + line +
+		       ", resolved=" + resolved +
+		       ", removed=" + removed +
+		       '}';
+	}
 }
