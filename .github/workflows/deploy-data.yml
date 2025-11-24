@@ -77,7 +77,7 @@ jobs:
           fetch-depth: '0'
       - name: Overwrite deployment data
         run: |
-          rm *
+          rm -r *
           cp -r /tmp/es-wiki-data/* .
       - name: Commit deployment data
         uses: stefanzweifel/git-auto-commit-action@v7
