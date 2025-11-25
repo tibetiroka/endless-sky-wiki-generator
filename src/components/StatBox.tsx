@@ -14,6 +14,7 @@ import {ReactElement, useState} from "react";
 import {ObjectData} from "../data/ObjectData.ts";
 import {AnimationDisplay} from "./AnimationDisplay.tsx"
 import {Tab, Tabs} from "react-bootstrap";
+import {arrayEquals} from "../utils.ts";
 
 type StatBoxProps = { elements: ReferenceSource[] }
 
@@ -52,9 +53,22 @@ export function StatBox(props: StatBoxProps) {
 			.join(' ');
 	}
 
+	const displayedPaths: string[][] = [
+		['name'], ['sprite'], ['thumbnail'], ['series'], ['index'], ['display name'], ['description'],
+		['unique'], ['unplunderable'], ['explode'], ['final explode'], ['leak'], ['outfits'], ['inscrutable'],
+		['flare sound'], ['hyperdrive sound'], ['hyperdrive in sound'], ['hyperdrive out sound'], ['steering flare sound'],
+		['afterburner effect'],
+		['weapon', 'homing']
+	];
+	[...displayedPaths].map(p=>displayedPaths.push(['attributes', ...p]));
+
 	function StatRow(hideIfDefault: boolean, attribute: string, name?: string, source: string[] = ['attributes'], computeMode?: string, defaultValue: any = '0') {
-		if (!name) {
-			name = capitalizeWords(attribute);
+		let usedName = name ?? capitalizeWords(attribute);
+		{
+			const combinedKey = [...source, attribute];
+			if (!displayedPaths.some(path => arrayEquals(path, combinedKey))) {
+				displayedPaths.push(combinedKey);
+			}
 		}
 
 		function getValues() {
@@ -84,22 +98,35 @@ export function StatBox(props: StatBoxProps) {
 				}
 				if (result) {
 					const parsed = Number.parseFloat(result);
-					if (!isNaN(parsed)) {
+					if (isNaN(parsed)) {
+						if(defaultValue) {
+							result = defaultValue;
+						}
+					} else {
 						result = parsed.toLocaleString();
 					}
 				}
-				return result ?? defaultValue;
+				return (result && result !== 'NaN') ? result : defaultValue;
 			});
 		}
 
-		const values = getValues() ?? [];
+		let values = getValues() ?? [];
 
 		if (hideIfDefault && values.every(value => value === defaultValue || value === Number.parseFloat(defaultValue).toLocaleString())) {
 			return undefined;
 		}
 
-		return <tr key={attribute + '_' + name + '_' + (computeMode ?? '')}>
-			<td>{name}</td>
+		const allNegative = values.every(value => value === defaultValue || value === '' || value[0] === '-')
+			&& !values.every(value => value === defaultValue || value === '');
+		if(allNegative && !name) {
+			if(!usedName.includes('Required')) {
+				usedName += ' Required';
+			}
+			values = values.map(v => (typeof(v) === 'string' && v[0] === '-') ? v.substring(1) : v);
+		}
+
+		return <tr key={attribute + '_' + usedName + '_' + (computeMode ?? '')}>
+			<td>{usedName}</td>
 			{toCols(object => values[data?.indexOf(object) ?? 0])}
 		</tr>
 	}
@@ -114,7 +141,7 @@ export function StatBox(props: StatBoxProps) {
 		</tr>);
 		switch (type) {
 			case 'ship': {
-				rows.push(StatRow(false, 'category', 'Class'));
+				rows.push(StatRow(false, 'category', 'Class', ['attributes'], undefined, null));
 				rows.push(StatRow(false, 'cost', 'Hull Cost'));
 				rows.push(StatRow(false, 'total cost', 'Standard Cost', []));
 				rows.push(StatRow(false, 'shields'));
@@ -137,18 +164,67 @@ export function StatBox(props: StatBoxProps) {
 					<td>Turret Mounts</td>
 					{toCols(object => object.getData()['turret']?.length ?? 0)}
 				</tr>);
+
+				// extra ship attributes
+				for (const object of data) {
+					const attr = object.getData()['attributes'] ?? object.getData();
+					if (attr) {
+						for (const key in attr) {
+							if (typeof (attr[key]) === 'string') {
+								const combinedKey = ['attributes', key];
+								if (!displayedPaths.some(path => arrayEquals(path, combinedKey))) {
+									rows.push(StatRow(true, key, undefined, ['attributes'], undefined, ''));
+								}
+							}
+						}
+					}
+				}
 				break;
 			}
 			case 'outfit': {
+				rows.push(StatRow(true, 'category', 'Category', ['attributes'], undefined, null));
 				rows.push(StatRow(false, 'cost'));
+				rows.push(StatRow(true, 'gun ports'));
+				rows.push(StatRow(true, 'turret mounts'));
 				rows.push(StatRow(true, 'mass'));
 				rows.push(StatRow(false, 'outfit space'));
+				rows.push(StatRow(true, 'weapon capacity'));
+				rows.push(StatRow(true, 'engine capacity'));
+				rows.push(StatRow(true, 'acceleration', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'drag', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'infrared tracking', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'optical tracking', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'radar tracking', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'tracking', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'penetration count', undefined, ['attributes', 'weapon']));
+				rows.push(StatRow(true, 'piercing', undefined, ['attributes', 'weapon']));
+				// extra outfit attributes
+				for (const object of data) {
+					const attr = object.getData()['attributes'] ?? object.getData();
+					if (attr) {
+						for (const key in attr) {
+							if (typeof (attr[key]) === 'string') {
+								const combinedKey = ['attributes', key];
+								if (!displayedPaths.some(path => arrayEquals(path, combinedKey))) {
+									rows.push(StatRow(true, key, undefined, ['attributes'], undefined, ''));
+								}
+							}
+						}
+					}
+				}
+				// weapon attributes
 				if (data.some(object => (object.getData()['attributes'] ?? object.getData())['weapon'])) {
 					rows.push(StatRow(true, 'velocity', 'Range', ['attributes', 'weapon'], 'lifetime'));
 					rows.push(StatRow(true, 'firing force', undefined, ['attributes', 'weapon']));
 					rows.push(StatRow(true, 'hit force', undefined, ['attributes', 'weapon']));
+					rows.push(StatRow(true, 'inaccuracy', undefined, ['attributes', 'weapon']));
+					rows.push(StatRow(true, 'lifetime', undefined, ['attributes', 'weapon']));
+					// H2H
+					rows.push(StatRow(true, 'capture attack'));
+					rows.push(StatRow(true, 'capture defense'));
 					// extra weapon stats
 					const modes = ['per second', undefined];
+					const extraWeaponRows: string[] = [];
 					for (const mode of modes) {
 						rows.push(
 							<tr key={'header' + (mode ?? '')}>
@@ -160,7 +236,24 @@ export function StatBox(props: StatBoxProps) {
 						rows.push(StatRow(false, 'firing heat', undefined, ['attributes', 'weapon'], mode));
 						if (mode) {
 							rows.push(StatRow(false, 'reload', 'Shots', ['attributes', 'weapon'], mode));
+							for (const object of data) {
+								const attr = object.getData()['attributes'] ?? object.getData();
+								const weapon = attr['weapon'];
+								if (weapon) {
+									for (const key in weapon) {
+										if (typeof (weapon[key]) === 'string') {
+											const combinedKey = ['attributes', 'weapon', key];
+											if (!displayedPaths.some(path => arrayEquals(path, combinedKey))) {
+												extraWeaponRows.push(key);
+											}
+										}
+									}
+								}
+							}
 						}
+						extraWeaponRows.forEach(key => {
+							rows.push(StatRow(true, key, undefined, ['attributes', 'weapon'], mode, ''));
+						});
 					}
 				}
 				break;
