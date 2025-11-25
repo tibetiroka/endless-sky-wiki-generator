@@ -107,8 +107,6 @@ public class Main {
 								default -> false;
 							};
 							if(!isVideo) {
-								command.add("-loop");
-								command.add("1");
 								command.add("-t");
 								command.add(Double.toString(animation.timePerFrame));
 							}
@@ -152,7 +150,7 @@ public class Main {
 	}
 
 	private static HashMap<String, Animation> findAnimations(File data) throws IOException {
-		String[] types = new String[]{"ship", "outfit", "planet"};
+		String[] types = new String[]{"ship", "outfit", "planet", "minable"};
 		String[] entries = new String[]{"sprite", "thumbnail", "landscape"};
 
 		HashMap<String, Animation> animations = new HashMap<>();
