@@ -223,8 +223,8 @@ export function LandingLocationGenerator(source: ReferenceSource, title?: string
 			if (landableArray.length > 0) {
 				setPlanets(<section>
 					<h2>Landing locations</h2>
-					{data.displayName} has {landableArray.length} landing {landableArray.length === 1 ? 'location' : 'locations'}:
-					<ReferenceLinkList sources={landableArray.map(name => new ReferenceSource('planet', name))}/>
+					<ReferenceLinkList sources={landableArray.map(name => new ReferenceSource('planet', name))}
+									   title={data.displayName + ' has ' + landableArray.length + ' landing ' + (landableArray.length === 1 ? 'location' : 'locations') + ':'}/>
 				</section>)
 			} else {
 				setPlanets(<section>
@@ -247,10 +247,8 @@ export function LinkGenerator(source: ReferenceSource, title?: string) {
 				const linkArray: string[] = typeof dataLinks === 'string' ? [dataLinks] : (dataLinks as string[]);
 				setLinks(<section>
 					<h2>Links</h2>
-					<details>
-						<summary>{data.displayName} links to {linkArray.length === 1 ? '1 system' : linkArray.length + ' systems'}:</summary>
-						<ReferenceLinkList sources={linkArray.map(link => new ReferenceSource('system', link))}/>
-					</details>
+					<ReferenceLinkList sources={linkArray.map(link => new ReferenceSource('system', link))}
+									   title={<>{data.displayName} links to {linkArray.length === 1 ? '1 system' : linkArray.length + ' systems'}:</>}/>
 				</section>);
 			} else {
 				setLinks(<section>
@@ -276,10 +274,7 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 						if (myReferences.length > 0) {
 							setLocation(<section>
 								<h2>Location</h2>
-								<details>
-									<summary>This fleet can appear in the following systems:</summary>
-									<ReferenceLinkList sources={myReferences}/>
-								</details>
+								<ReferenceLinkList sources={myReferences} title='This fleet can appear in the following systems:'/>
 							</section>);
 						} else {
 							setLocation(<section>
@@ -299,15 +294,13 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 						setLocation(<section>
 							<h2>Location</h2>
 							{planets.length === 0 ?
-								<p>There are no planets directly belonging to this government.</p> : <details>
-									<summary>The following planets are assigned to this government:</summary>
-									<ReferenceLinkList sources={planets}/>
-								</details>}
+								<p>There are no planets directly belonging to this government.</p> :
+								<ReferenceLinkList sources={planets} title='The following planets are assigned to this government:'/>
+							}
 							{systems.length === 0 ?
-								<p>There are no systems directly belonging to this government.</p> : <details>
-									<summary>The following systems are assigned to this government:</summary>
-									<ReferenceLinkList sources={systems}/>
-								</details>}
+								<p>There are no systems directly belonging to this government.</p> :
+								<ReferenceLinkList sources={systems} title='The following systems are assigned to this government:'/>
+							}
 						</section>);
 					} else {
 						setLocation(<section>
@@ -324,8 +317,7 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 					if (systems.length > 0) {
 						setLocation(<section>
 							<h2>Location</h2>
-							This minable appears in the following systems:
-							<ReferenceLinkList sources={systems}/>
+							<ReferenceLinkList sources={systems} title='This minable appears in the following systems:'/>
 						</section>);
 					} else {
 						setLocation(<section>
@@ -348,11 +340,8 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 						if (planets.length > 0) {
 							setLocation(<section>
 								<h2>Location</h2>
-								<details>
-									<summary>This {source.type} appears on {planets.length === 1 ? '1 planet' : planets.length + ' planets'}:</summary>
-									<ReferenceLinkList sources={planets}/>
-									{conditional}
-								</details>
+								<ReferenceLinkList sources={planets} title={<>This {source.type} appears on {planets.length === 1 ? '1 planet' : planets.length + ' planets'}:</>}/>
+								{conditional}
 							</section>);
 						} else {
 							setLocation(<section>
@@ -396,11 +385,11 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 				if (outfits.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
-						The {data.displayName} has the following outfits installed:
 						<ReferenceLinkList
 							sources={outfits.map(outfit => new ReferenceSource('outfit', outfit))}
 							categoryType='outfit'
-							counts={outfits.map(outfit => data.getData()['outfits'][outfit])}/>
+							counts={outfits.map(outfit => data.getData()['outfits'][outfit])}
+							title={<>The {data.displayName} has the following outfits installed:</>}/>
 					</section>);
 				} else {
 					setOutfits(<section>
@@ -417,7 +406,7 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 				setOutfits(<section>
 						<h2>Outfits</h2>
 						{outfits.length > 0 ?
-							<>Outfits sold here:<ReferenceLinkList sources={outfits.map(outfit => new ReferenceSource('outfit', outfit))} categoryType={'outfit'}/></>
+							<ReferenceLinkList sources={outfits.map(outfit => new ReferenceSource('outfit', outfit))} categoryType={'outfit'} title='Outfits sold here:'/>
 							: "This outfitter doesn't sell any outfits."}
 						{['location', 'stock'].some(key => data.getData()[key]) ?
 							<p>This outfitter may sell other outfits conditionally.</p>
@@ -432,10 +421,7 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 				if (outfitReferences.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
-						<details>
-							<summary>This category contains the following outfits:</summary>
-							<ReferenceLinkList sources={myReferences} categoryType='outfit'/>
-						</details>
+						<ReferenceLinkList sources={myReferences} categoryType='outfit' title='This category contains the following outfits:'/>
 					</section>);
 				} else {
 					setOutfits(null);
@@ -448,8 +434,7 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 				if (outfitReferences.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
-						This license is required to purchase the following outfits:
-						<ReferenceLinkList sources={myReferences} categoryType='outfit'/>
+						<ReferenceLinkList sources={myReferences} categoryType='outfit' title='This license is required to purchase the following outfits:'/>
 					</section>);
 				} else {
 					setOutfits(<section>
@@ -474,8 +459,7 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 					if (shipReferences.length > 0) {
 						setShips(<section>
 							<h2>Ships</h2>
-							This license is required to purchase the following ships:
-							<ReferenceLinkList sources={shipReferences} categoryType='ship'/>
+							<ReferenceLinkList sources={shipReferences} categoryType='ship' title='This license is required to purchase the following ships:'/>
 						</section>);
 					} else {
 						setShips(<section>
@@ -487,10 +471,7 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 					if (shipReferences.length > 0) {
 						setShips(<section>
 							<h2>Ships</h2>
-							<details>
-								<summary>This outfit is installed on {shipReferences.length} stock {shipReferences.length === 1 ? 'ship' : 'ships'}:</summary>
-								<ReferenceLinkList sources={shipReferences} categoryType='ship'/>
-							</details>
+							<ReferenceLinkList sources={shipReferences} categoryType='ship' title={<>This outfit is installed on {shipReferences.length} stock {shipReferences.length === 1 ? 'ship' : 'ships'}:</>}/>
 						</section>);
 					} else {
 						setShips(<section>
@@ -508,7 +489,7 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 				setShips(<section>
 						<h2>Ships</h2>
 						{ships.length > 0 ?
-							<>Ships sold here:<ReferenceLinkList sources={ships.map(ship => new ReferenceSource('ship', ship))} categoryType='ship'/></>
+							<ReferenceLinkList sources={ships.map(ship => new ReferenceSource('ship', ship))} categoryType='ship' title='Ships sold here:'/>
 							: "This shipyard doesn't sell any ships."}
 						{['location', 'stock', 'to sell'].some(key => data.getData()[key]) ?
 							<p>This shipyard may sell other ships conditionally.</p>
@@ -545,12 +526,10 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 				if (shipReferences.length > 0) {
 					setShips(<section>
 						<h2>Ships</h2>
-						<details>
-							{getParts(source)[1] === 'bay type' ?
-								<summary>Ships with bays of this type:</summary> :
-								<summary>This category contains the following ships:</summary>}
-							<ReferenceLinkList sources={myReferences} categoryType={getParts(source)[1] === 'ship' ? undefined : 'ship'}/>
-						</details>
+						<ReferenceLinkList sources={myReferences} categoryType={getParts(source)[1] === 'ship' ? undefined : 'ship'}
+										   title={getParts(source)[1] === 'bay type' ?
+											   <summary>Ships with bays of this type:</summary> :
+											   <summary>This category contains the following ships:</summary>}/>
 					</section>);
 				} else {
 					setShips(null);
@@ -565,18 +544,16 @@ export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 	let [outfitters, setOutfitters] = useState(undefined as ReactElement | undefined);
 	if (!outfitters) {
 		if (source.type === 'outfit') {
-			if(isLicense(source)) {
+			if (isLicense(source)) {
 				setOutfitters(<></>);
-			}
-			else {
+			} else {
 				getReferences(source.type).then(references => {
 					const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
 					const outfitterReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'outfitter');
 					if (outfitterReferences.length > 0) {
 						setOutfitters(<section>
 							<h2>Outfitters</h2>
-							This outfit is sold in the following outfitters:
-							<ReferenceLinkList sources={outfitterReferences}/>
+							<ReferenceLinkList sources={outfitterReferences} title='This outfit is sold in the following outfitters:'/>
 						</section>)
 					} else {
 						setOutfitters(<section>
@@ -595,8 +572,7 @@ export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 				if (myOutfitters.length > 0) {
 					setOutfitters(<section>
 						<h2>Outfitters</h2>
-						This planet has the following outfitters available:
-						<ReferenceLinkList sources={myOutfitters.map(outfitter => new ReferenceSource('outfitter', outfitter))}/>
+						<ReferenceLinkList sources={myOutfitters.map(outfitter => new ReferenceSource('outfitter', outfitter))} title='This planet has the following outfitters available:'/>
 					</section>);
 				} else {
 					setOutfitters(<section>
@@ -620,8 +596,7 @@ export function ShipyardGenerator(source: ReferenceSource, title?: string) {
 				if (shipyardReferences.length > 0) {
 					setShipyards(<section>
 						<h2>Shipyards</h2>
-						This ship is sold in the following shipyards:
-						<ReferenceLinkList sources={shipyardReferences}/>
+						<ReferenceLinkList sources={shipyardReferences} title='This ship is sold in the following shipyards:'/>
 					</section>)
 				} else {
 					setShipyards(<section>
@@ -639,8 +614,7 @@ export function ShipyardGenerator(source: ReferenceSource, title?: string) {
 				if (myShipyards.length > 0) {
 					setShipyards(<section>
 						<h2>Shipyards</h2>
-						This planet has the following shipyards available:
-						<ReferenceLinkList sources={myShipyards.map(shipyard => new ReferenceSource('shipyard', shipyard))}/>
+						<ReferenceLinkList sources={myShipyards.map(shipyard => new ReferenceSource('shipyard', shipyard))} title='This planet has the following shipyards available:'/>
 					</section>);
 				} else {
 					setShipyards(<section>
@@ -665,10 +639,7 @@ export function VariantListGenerator(source: ReferenceSource, title?: string) {
 					if (myReferences.length > 0) {
 						setVariants(<section>
 							<h2>Variants</h2>
-							<details>
-								<summary>This ship has the following variants:</summary>
-								<ReferenceLinkList sources={myReferences}/>
-							</details>
+							<ReferenceLinkList sources={myReferences} title='This ship has the following variants:'/>
 						</section>);
 					}
 				}
@@ -689,10 +660,7 @@ export function FleetListGenerator(source: ReferenceSource, title?: string) {
 					setFleets(<section>
 						<h2>Fleets</h2>
 						{myFleets.length > 0 ?
-							<>
-								The following fleets appear in this system naturally:
-								<ReferenceLinkList sources={myFleets.map(fleet => new ReferenceSource('fleet', fleet['name']))}/>
-							</>
+							<ReferenceLinkList sources={myFleets.map(fleet => new ReferenceSource('fleet', fleet['name']))} title='The following fleets appear in this system naturally:'/>
 							: <>No fleets appear in this system naturally.</>}
 					</section>);
 				})
@@ -704,10 +672,7 @@ export function FleetListGenerator(source: ReferenceSource, title?: string) {
 					setFleets(<section>
 						<h2>Fleets</h2>
 						{myFleets.length > 0 ?
-							<>
-								This ship appears in the following fleets:
-								<ReferenceLinkList sources={myFleets}/>
-							</>
+							<ReferenceLinkList sources={myFleets} title='This ship appears in the following fleets:'/>
 							: <>This ship doesn't appear in any fleet.</>}
 					</section>);
 				});

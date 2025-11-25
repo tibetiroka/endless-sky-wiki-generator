@@ -9,7 +9,7 @@
  */
 
 import {ReferenceData, ReferenceSource, toURL} from "../data/ReferenceSource.ts";
-import {useState} from "react";
+import {ReactNode, useState} from "react";
 import {getData, getDisplayName, getReferences} from "../data/DataFetcher.ts";
 import {findSource} from "../utils.ts";
 
@@ -28,14 +28,14 @@ type ReferenceLinkListProps = {
 	sources: ReferenceSource[],
 	categoryType?: string,
 	counts?: number[],
-	skipSort?: boolean
+	skipSort?: boolean,
+	title?: string | ReactNode
 };
 
 export function ReferenceLinkList(props: ReferenceLinkListProps) {
 	let [displayNames, setDisplayNames] = useState(undefined as string[] | undefined);
 	let [categories, setCategories] = useState(undefined as string[] | undefined);
 	let [references, setReferences] = useState(undefined as ReferenceData | undefined);
-	let [parents, setParents] = useState(undefined as (ReferenceSource | undefined)[] | undefined);
 
 	if (!displayNames && !props.categoryType) {
 		Promise.all(props.sources.map(source => getDisplayName(source))).then(data => setDisplayNames(data));
@@ -52,33 +52,19 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 			.then(data => setReferences(data));
 	}
 
-	if (!parents && props.categoryType === 'ship') {
-		getReferences(props.categoryType)
-			.then(references => {
-				setParents(props.sources.map(source => {
-					for (let key in references) {
-						if (findSource(source, references[key]) !== null) {
-							return new ReferenceSource('ship', key);
-						}
-					}
-					return undefined;
-				}));
-			});
-	}
-
 	function filterElements(filter: ReferenceSource[]): { source: ReferenceSource, index: number }[] {
 		return props.sources.flatMap((source, index) => {
-			const currParents = parents as (ReferenceSource | undefined)[];
-			if (findSource(source, filter) !== null || (parents && currParents[index] && findSource(currParents[index], filter))) {
+			if (findSource(source, filter) !== null) {
 				return [{source, index}];
 			}
 			return [];
 		});
 	}
 
+	let innerComponent;
 	if ((displayNames || props.categoryType) && ((categories && references) || !props.categoryType)) {
 		if (props.categoryType) {
-			return <ul>
+			innerComponent = <ul>
 				{(categories as string[]).map(category => {
 						const sources = filterElements((references as ReferenceData)[category] ?? []);
 						if (sources.length > 0) {
@@ -103,7 +89,7 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 			if (!props.skipSort) {
 				sources = sources.toSorted((a, b) => a.displayName.localeCompare(b.displayName));
 			}
-			return <ul>
+			innerComponent = <ul>
 				{sources
 					.map(({displayName, source}, index) =>
 						<li key={source.type + '/' + source.name}>
@@ -112,5 +98,16 @@ export function ReferenceLinkList(props: ReferenceLinkListProps) {
 					)}
 			</ul>
 		}
+	}
+	if (props.title && props.sources.length > 15) {
+		return <details>
+			<summary>{props.title}</summary>
+			{innerComponent}
+		</details>
+	} else {
+		return <>
+			{props.title}
+			{innerComponent}
+		</>
 	}
 }
