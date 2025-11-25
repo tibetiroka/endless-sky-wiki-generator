@@ -29,7 +29,7 @@ export function StatBox(props: StatBoxProps) {
 		console.log("Mixed types in stat box");
 		props.elements = props.elements.filter(source => source.type === type);
 	}
-	const supportedTypes = ['ship', 'outfit'];
+	const supportedTypes = ['ship', 'outfit', 'minable', 'planet'];
 	if (!supportedTypes.includes(type)) {
 		return undefined;
 	}
@@ -258,6 +258,28 @@ export function StatBox(props: StatBoxProps) {
 				}
 				break;
 			}
+			case 'minable': {
+				rows.push(StatRow(true, 'hull'));
+				rows.push(StatRow(true, 'random hull'));
+				// extra minable attributes
+				for (const object of data) {
+					const attr = object.getData()['attributes'] ?? object.getData();
+					if (attr) {
+						for (const key in attr) {
+							if (typeof (attr[key]) === 'string') {
+								const combinedKey = ['attributes', key];
+								if (!displayedPaths.some(path => arrayEquals(path, combinedKey))) {
+									rows.push(StatRow(true, key, undefined, ['attributes'], undefined, ''));
+								}
+							}
+						}
+					}
+				}
+				break;
+			}
+			case 'planet': {
+				break;
+			}
 		}
 	}
 
@@ -299,6 +321,10 @@ function CombinedImageDisplay(props: CombinedImageDisplayProps) {
 	images.push({
 		name: 'Overhead',
 		animation: props.data.getData()['sprite'] ? toString(props.data.getSource()) + '/sprite' : undefined
+	});
+	images.push({
+		name: 'Landscape',
+		animation: props.data.getData()['landscape'] ? toString(props.data.getSource()) + '/landscape' : undefined
 	});
 
 	const existingImages = images.filter(image => image.animation);
