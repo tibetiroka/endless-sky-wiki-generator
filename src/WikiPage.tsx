@@ -499,9 +499,8 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 			});
 		} else if (source.type === 'fleet') {
 			getData(source).then(data => {
-				const variants = data.getData()['variant'] ?? [];
-				const variantArray = (variants instanceof Array) ? variants : [variants];
-				if (variants.length > 0) {
+				const variantArray = [].concat(data.getData()['variant'] ?? []);
+				if (variantArray.length > 0) {
 					setShips(<section>
 						<h2>Ships</h2>
 						This fleet has the following variants:
