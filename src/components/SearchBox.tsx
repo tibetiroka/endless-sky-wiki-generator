@@ -92,10 +92,23 @@ export const SearchBox = () => {
 				type="text"
 				value={inputValue}
 				onChange={handleChange}
+				onKeyDown={key => {
+					if (key.key === 'Escape') {
+						(key.target as any).value = '';
+						handleChange(key as any);
+						key.preventDefault();
+					} else if (key.key === 'ArrowDown') {
+						const firstSuggestion: any = document.getElementsByClassName("autocomplete-suggestion").item(0);
+						if (firstSuggestion !== null) {
+							firstSuggestion.focus();
+						}
+						key.preventDefault();
+					}
+				}}
 				placeholder="Search..."
 			/>
 			<ul className="autocomplete-suggestions">
-				{generateSuggestions(filteredSuggestions, handleSelect)}
+				{generateSuggestions(filteredSuggestions, handleSelect, handleChange)}
 			</ul>
 		</div>
 	);
@@ -114,8 +127,9 @@ class SuggestionEntry {
 }
 
 type SelectorCallback = (source: ReferenceSource) => any;
+type InputCallback = (event: { target: { value: any; } }) => any;
 
-function generateSuggestions(suggestions: Array<IndexEntry>, handleSelect: SelectorCallback) {
+function generateSuggestions(suggestions: Array<IndexEntry>, handleSelect: SelectorCallback, handleChange: InputCallback) {
 	const entries: Array<SuggestionEntry> = new Array<SuggestionEntry>();
 
 	for (const suggestion of suggestions) {
@@ -136,7 +150,45 @@ function generateSuggestions(suggestions: Array<IndexEntry>, handleSelect: Selec
 	return entries
 		.slice(0, Math.min(10, entries.length))
 		.map((entry, index) => {
-			return <li key={index} className="autocomplete-suggestion bg-secondary-subtle" onClick={() => handleSelect(entry.value)}>
+			return <li key={index}
+					   className="autocomplete-suggestion bg-secondary-subtle"
+					   tabIndex={0}
+					   onClick={() => handleSelect(entry.value)}
+					   onKeyDown={event => {
+						   function focus(key: string) {
+							   const {activeElement: {[key]: elementSibling} = {}} = document as any;
+							   if (elementSibling) {
+								   elementSibling.focus();
+							   } else {
+								   const input = document.getElementsByClassName('autocomplete-input').item(0);
+								   if (input) {
+									   (input as any).focus();
+								   }
+							   }
+						   }
+
+						   if (event.key === 'ArrowDown') {
+							   focus('nextElementSibling');
+							   event.preventDefault();
+						   } else if (event.key === 'ArrowUp') {
+							   focus('previousElementSibling');
+							   event.preventDefault();
+						   } else if (event.key === 'Enter') {
+							   handleSelect(entry.value);
+							   event.preventDefault();
+						   } else if (event.key.length === 1 || event.key === 'Backspace') {
+							   const input = document.getElementsByClassName('autocomplete-input').item(0) as any;
+							   if (input) {
+								   if (event.key === 'Backspace') {
+									   input.value = input.value.length === 0 ? input.value : input.value.substring(0, input.value.length - 1);
+								   } else {
+									   input.value += event.key;
+								   }
+								   event.preventDefault();
+								   handleChange({target: input});
+							   }
+						   }
+					   }}>
 				{entry.key + (entry.duplicate !== null ? ' (' + entry.duplicate + ')' : '')}
 			</li>;
 		});
