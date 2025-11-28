@@ -91,6 +91,16 @@ div.side-stat-box {
 	padding: 10px;
 }
 
+@media all and (max-width: 420px) {
+	div.side-stat-box {
+		width: 100%;
+		display: block;
+	}
+	table.stats {
+		width: 100%;
+	}
+}
+
 div.animation-display-div * {
 	position: absolute;
 	top: 0;
