@@ -25,7 +25,6 @@ import {
 	getReferences
 } from "./data/DataFetcher.ts";
 import {ObjectData} from './data/ObjectData.ts'
-import {Navigate} from "react-router";
 import {findSource} from "./utils.ts";
 import {Alert} from "react-bootstrap";
 import {CommitData} from "./data/CommitData.ts";
@@ -33,7 +32,7 @@ import {ChangeData} from "./data/ChangeData.ts";
 import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
 import {Changelog} from "./components/Changelog.tsx";
 import {StatBox} from "./components/StatBox.tsx";
-import {HOME_PATH} from "./web_utils.ts";
+import {GoHome} from "./components/GoHome.tsx";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -106,7 +105,7 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 							: <><small style={{fontStyle: "italic"}}>Internally: {source.name}</small><br/></>}
 					</>);
 			}).catch(() => {
-				setHeading(<Navigate to={{pathname: '/' + HOME_PATH}}/>);
+				setHeading(GoHome());
 			});
 		}
 	}

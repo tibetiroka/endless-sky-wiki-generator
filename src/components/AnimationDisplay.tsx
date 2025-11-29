@@ -19,8 +19,12 @@ export function AnimationDisplay(props: AnimationDisplayProps) {
 	}
 
 	return <div className='animation-display-wrapper'>
-		<img className='animation-display' src={getDataUrl('assets/' + props.source).toString()} alt='' onError={(error) => {
-			(error.target as any).src = getEsUrl('images/outfit/unknown.png').toString();
-		}}/>
+		<img className='animation-display'
+			 src={getDataUrl('assets/' + props.source).toString()}
+			 alt=''
+			 loading='lazy'
+			 onError={(error) => {
+				 (error.target as any).src = getEsUrl('images/outfit/unknown.png').toString();
+			 }}/>
 	</div>
 }

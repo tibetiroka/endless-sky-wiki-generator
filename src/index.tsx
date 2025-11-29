@@ -7,10 +7,11 @@ import ReactDOM from 'react-dom/client';
 import SharedLayout, {updateDarkMode} from "./SharedLayout";
 import {BrowserRouter, Route, Routes} from "react-router";
 import Home from "./Home";
-import Changelog from "./Changelog";
+import Comparison from "./Comparison.tsx";
 import {ReferenceSource} from "./data/ReferenceSource.ts";
 import WikiPage from "./WikiPage.tsx";
 import {getCurrentSource, isOfficial, HOME_PATH} from "./web_utils.ts";
+import {GoHome} from "./components/GoHome.tsx";
 
 // @ts-ignore
 const domRoot = ReactDOM.createRoot(document.getElementById('root'));
@@ -24,7 +25,10 @@ domRoot.render(
 					{/*@ts-ignore*/}
 					<Route index Component={Home}/>
 					{/*@ts-ignore*/}
-					<Route exact path="changelog" Component={Changelog}/>
+					<Route path="compare">
+						<Route index Component={GoHome}/>
+						<Route path="*" Component={Comparison}/>
+					</Route>
 					<Route path="*" Component={DynamicRoute}/>
 				</Route>
 			</Routes>

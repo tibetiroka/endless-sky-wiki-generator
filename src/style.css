@@ -101,6 +101,10 @@ div.side-stat-box {
 	}
 }
 
+div.global-stat-box {
+	overflow: scroll;
+}
+
 div.animation-display-div * {
 	position: absolute;
 	top: 0;
