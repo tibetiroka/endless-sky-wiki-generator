@@ -58,7 +58,7 @@ export function StatBox(props: StatBoxProps) {
 		['unique'], ['unplunderable'], ['explode'], ['final explode'], ['leak'], ['outfits'], ['inscrutable'],
 		['flare sound'], ['hyperdrive sound'], ['hyperdrive in sound'], ['hyperdrive out sound'], ['steering flare sound'],
 		['sound'], ['hit effect'], ['afterburner effect'], ['flotsam sprite'], ['plural'], ['noun'],
-		['weapon', 'homing']
+		['weapon', 'homing'], ['weapon', 'sound'], ['weapon', 'hit effect']
 	];
 	[...displayedPaths].map(p=>displayedPaths.push(['attributes', ...p]));
 
