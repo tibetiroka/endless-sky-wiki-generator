@@ -118,6 +118,23 @@ div.global-stat-box {
 	}
 }
 
+button.comparison-button {
+	margin: 2px;
+	padding: 4px;
+}
+
+div.comparison-bulk-navigation .toast {
+	width: auto;
+	display: inline-block;
+	margin: 2px;
+	padding: 4px;
+}
+
+div.comparison-bulk-navigation .toast>.toast-body {
+	margin: 0;
+	padding: 0;
+}
+
 div.animation-display-div * {
 	position: absolute;
 	top: 0;

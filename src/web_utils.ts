@@ -39,6 +39,10 @@ export function getPath(relativeTo: string = '', pathname: string = decodeURICom
 	return '';
 }
 
+export function createPath(path: string, relativeTo: string = getDomainWithProtocol() + '/' + HOME_PATH + '/'): URL {
+	return new URL(relativeTo + path);
+}
+
 export function getCurrentSource(relativeTo: string = HOME_PATH, pathname: string = decodeURIComponent(window.location.pathname)): ReferenceSource {
 	let path: string = getPath(relativeTo, pathname);
 	path = path.replace(/^\/+/, '').replace(/\/+$/, '');

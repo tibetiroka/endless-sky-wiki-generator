@@ -33,6 +33,7 @@ import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
 import {Changelog} from "./components/Changelog.tsx";
 import {StatBox} from "./components/StatBox.tsx";
 import {GoHome} from "./components/GoHome.tsx";
+import {ComparisonSingleItemNavigation} from "./components/ComparisonNavigation.tsx";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -187,7 +188,10 @@ export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 }
 
 export function StatsGenerator(source: ReferenceSource, title?: string) {
-	return <div className='side-stat-box'><StatBox elements={[source]}/></div>
+	return <div className='side-stat-box'>
+		<StatBox elements={[source]}/>
+		{(source.type === 'ship' || source.type === 'outfit') ? <ComparisonSingleItemNavigation source={source}/> : <></>}
+	</div>
 }
 
 export function LandingLocationGenerator(source: ReferenceSource, title?: string) {
