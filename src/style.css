@@ -147,16 +147,25 @@ table td:has(.animation-display) {
 	text-align: center;
 }
 
-.animation-display {
+table td:has(.combined-image-display-tabs) {
+	vertical-align: top;
+}
+
+img.animation-display {
 	max-width: 250px;
 	max-height: 250px;
-	margin-left: auto;
-	margin-right: auto;
+	margin: auto;
 	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
 	image-rendering: pixelated;
+}
+
+div.animation-display-wrapper {
+	vertical-align: center;
+	width: 250px;
+	height: 250px;
 }
 
 .changelog table {
