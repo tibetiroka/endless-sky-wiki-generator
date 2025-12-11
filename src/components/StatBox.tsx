@@ -296,7 +296,7 @@ export function StatBox(props: StatBoxProps) {
 		}
 	}
 
-	return <div>
+	return <>
 		<table className='stats'>
 			<thead>
 			<tr>
@@ -307,7 +307,7 @@ export function StatBox(props: StatBoxProps) {
 			{rows}
 			</tbody>
 		</table>
-	</div>
+	</>
 }
 
 type CombinedImageDisplayProps = { data: ObjectData };
