@@ -52,6 +52,24 @@ export class PageGenerator {
 	variants?: SectionGenerator = VariantListGenerator;
 	fleets?: SectionGenerator = FleetListGenerator;
 	trivia?: SectionGenerator = TriviaGenerator;
+
+	static empty(): PageGenerator
+	{
+		const gen = new PageGenerator();
+		gen.stats = undefined;
+		gen.description = undefined;
+		gen.landingLocations = undefined;
+		gen.links = undefined;
+		gen.location = undefined;
+		gen.outfits = undefined;
+		gen.ships = undefined;
+		gen.outfitters = undefined;
+		gen.shipyards = undefined;
+		gen.variants = undefined;
+		gen.fleets = undefined;
+		gen.trivia = undefined;
+		return gen;
+	}
 }
 
 export const CUSTOM_PAGE_GENERATORS = new Map<ReferenceSource, PageGenerator>();
@@ -96,7 +114,7 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 	let [heading, setHeading] = useState(undefined as ReactElement | undefined);
 	if (!heading) {
 		if (title) {
-			setHeading(<h1 className="text-dark">{title}</h1>);
+			setHeading(<h1>{title}</h1>);
 		} else {
 			getDisplayName(source).then(displayName => {
 				setHeading(
@@ -112,7 +130,7 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 	}
 
 	let [removedNotice, setRemovedNotice] = useState(undefined as ReactElement | undefined);
-	if (!removedNotice) {
+	if (!removedNotice && !title) {
 		getData(source).then(data => {
 			if (data.isRemoved()) {
 				const commit: CommitData = data.getRemovedCommit() as CommitData;

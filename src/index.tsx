@@ -10,8 +10,11 @@ import Home from "./Home";
 import Comparison from "./Comparison.tsx";
 import {ReferenceSource} from "./data/ReferenceSource.ts";
 import WikiPage from "./WikiPage.tsx";
-import {getCurrentSource, isOfficial, HOME_PATH} from "./web_utils.ts";
+import {getCurrentSource, HOME_PATH, isOfficial} from "./web_utils.ts";
 import {GoHome} from "./components/GoHome.tsx";
+import {CUSTOM_PAGES} from "./components/SearchBox.tsx";
+import {findSource} from "./utils.ts";
+import {Guides} from "./pages/Guides.tsx";
 
 // @ts-ignore
 const domRoot = ReactDOM.createRoot(document.getElementById('root'));
@@ -29,6 +32,7 @@ domRoot.render(
 						<Route index Component={GoHome}/>
 						<Route path="*" Component={Comparison}/>
 					</Route>
+					<Route path='guides' Component={Guides}/>
 					<Route path="*" Component={DynamicRoute}/>
 				</Route>
 			</Routes>
@@ -65,6 +69,7 @@ document.addEventListener('click', e => {
 		if (link) {
 			if (!isOfficial(link)) {
 				target.target = "_blank";
+				target.rel = 'noreferrer nofollow noopener';
 			}
 		}
 	}
@@ -72,11 +77,20 @@ document.addEventListener('click', e => {
 
 function DynamicRoute() {
 	const source: ReferenceSource = getCurrentSource();
-	// todo: look up title from dynamic sources
+	let title = '';
+	for (const entry of CUSTOM_PAGES.getIndex()) {
+		if (findSource(source, entry.value) !== null) {
+			title = entry.key;
+			break;
+		}
+	}
 
-	return <WikiPage source={source} title=""/>
+	return <WikiPage source={source} title={title}/>
 }
 
 function registerCustomPages() {
-	// add pages to CUSTOM_PAGES here
+	/*function addPage(name: string, source: ReferenceSource, generator: PageGenerator) {
+		CUSTOM_PAGES.addEntry(name, source);
+		CUSTOM_PAGE_GENERATORS.set(source, generator)
+	}*/
 }
