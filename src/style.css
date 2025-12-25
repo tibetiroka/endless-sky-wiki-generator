@@ -166,6 +166,8 @@ div.animation-display-wrapper {
 	vertical-align: center;
 	width: 250px;
 	height: 250px;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .changelog table {

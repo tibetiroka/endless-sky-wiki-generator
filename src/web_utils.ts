@@ -16,6 +16,7 @@ export const DATA_ORIGIN: string = isHostedOnLocalhost() ? 'http://localhost:808
 	: 'https://raw.githubusercontent.com/tibetiroka/' + HOME_PATH + '/refs/heads/deploy/';
 
 export function isHostedOnLocalhost(hostname: string = window.location.hostname): boolean {
+	return false;
 	return hostname === 'localhost';
 }
 
