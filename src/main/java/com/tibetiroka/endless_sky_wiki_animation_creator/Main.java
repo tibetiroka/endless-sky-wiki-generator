@@ -103,7 +103,7 @@ public class Main {
 						command.add(Double.toString(1. / animation.timePerFrame));
 						for(File frame : usedFrames) {
 							boolean isVideo = switch(frame.getName().substring(frame.getName().lastIndexOf('.'))) {
-								case ".avi", ".avif"-> true;
+								case ".avi", ".avif" -> true;
 								default -> false;
 							};
 							if(!isVideo) {
@@ -115,13 +115,16 @@ public class Main {
 						}
 						command.add("-filter_complex");
 						int frameCount = usedFrames.size();
-						command.add(String.join("", IntStream.range(0, frameCount).mapToObj(i -> {
-							String video ="[" + i + ":v]";
-							if(animation.rewind && frameCount == 2 && i == 1) {
-								return video + "reverse";
-							}
-							return video;
-						}).toList()) + "concat=n=" + frameCount + ":v=1:a=0[out]");
+						command.add(String.join("", IntStream.range(0, frameCount).mapToObj(
+								i -> {
+									if(animation.rewind && frameCount == 2 && i == 1) {
+										return "[1:v]setsar=sar=1,reverse[out1];";
+									}
+									return "[" + i + ":v]setsar=sar=1[out" + i + "];";
+								}).toList())
+						            + String.join("", IntStream.range(0, frameCount).mapToObj(
+								i -> "[out" + i + "]").toList())
+						            + "concat=n=" + frameCount + ":v=1:a=0[out]");
 						command.add("-map");
 						command.add("[out]");
 						command.add("-loop");
@@ -149,6 +152,10 @@ public class Main {
 				});
 	}
 
+	private static String encode(String text) {
+		return text.replace('/', '$');
+	}
+
 	private static HashMap<String, Animation> findAnimations(File data) throws IOException {
 		String[] types = new String[]{"ship", "outfit", "planet", "minable", "effect", "galaxy", "star"};
 		String[] entries = new String[]{"sprite", "thumbnail", "landscape", "icon"};
@@ -161,11 +168,15 @@ public class Main {
 					try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
 						Map json = new Gson().fromJson(reader, Map.class);
 						Map jsonData = (Map) json.get("data");
+						String name = encode((String) jsonData.get("name"));
 						for(String entry : entries) {
 							if(jsonData.containsKey(entry)) {
-								String fullName = type + "/" + jsonData.get("name") + "/" + entry;
+								String fullName = type + "/" + name + "/" + entry;
 								animations.put(fullName, new Animation(jsonData.get(entry)));
 							}
+						}
+						if(isSpriteType(type)) {
+							animations.put(type + "/" + name + "/sprite", new Animation(jsonData.get("name")));
 						}
 					}
 				}
@@ -196,5 +207,9 @@ public class Main {
 			}
 		}
 		return frames;
+	}
+
+	private static boolean isSpriteType(String type) {
+		return type.equals("star");
 	}
 }

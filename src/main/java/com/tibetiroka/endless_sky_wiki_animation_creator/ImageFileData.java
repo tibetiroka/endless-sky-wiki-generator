@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 class ImageFileData {
 	private static final String BLENDING_MODES = "-=^+~";
-	private static final Pattern ANIMATION_PATTERN = Pattern.compile("[" + BLENDING_MODES + "]\\d+$");
 	public final File file;
 	public final int frameNumber;
 	public final boolean isImage;
@@ -32,14 +31,6 @@ class ImageFileData {
 
 		String relative = root.toPath().relativize(imageFile.toPath()).toString();
 		relative = relative.substring(0, relative.lastIndexOf('.'));
-
-		Matcher matcher = ANIMATION_PATTERN.matcher(relative);
-		if(!matcher.find()) {
-			frameNumber = 0;
-			this.isImage = true;
-			name = relative;
-			return;
-		}
 
 		if(relative.endsWith("@2x")) {
 			relative = relative.substring(0, relative.length() - "@2x".length());
@@ -58,7 +49,7 @@ class ImageFileData {
 		}
 		if(!relative.isEmpty() && BLENDING_MODES.contains(relative.charAt(relative.length() - 1) + "")) {
 			relative = relative.substring(0, relative.length() - 1);
-			frameNumber = Integer.parseInt(frame);
+			frameNumber = frame.isEmpty() ? 0 : Integer.parseInt(frame);
 		} else {
 			relative = relative + frame;
 			frameNumber = 0;
