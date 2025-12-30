@@ -150,8 +150,8 @@ public class Main {
 	}
 
 	private static HashMap<String, Animation> findAnimations(File data) throws IOException {
-		String[] types = new String[]{"ship", "outfit", "planet", "minable"};
-		String[] entries = new String[]{"sprite", "thumbnail", "landscape"};
+		String[] types = new String[]{"ship", "outfit", "planet", "minable", "effect", "galaxy", "star"};
+		String[] entries = new String[]{"sprite", "thumbnail", "landscape", "icon"};
 
 		HashMap<String, Animation> animations = new HashMap<>();
 		for(String type : types) {

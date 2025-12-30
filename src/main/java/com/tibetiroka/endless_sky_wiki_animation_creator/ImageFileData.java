@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 class ImageFileData {
 	private static final String BLENDING_MODES = "-=^+~";
-	private static final Pattern ANIMATION_PATTERN = Pattern.compile("[" + BLENDING_MODES +"]\\d+$");
+	private static final Pattern ANIMATION_PATTERN = Pattern.compile("[" + BLENDING_MODES + "]\\d+$");
 	public final File file;
 	public final int frameNumber;
 	public final boolean isImage;
@@ -56,13 +56,12 @@ class ImageFileData {
 			frame = relative.charAt(relative.length() - 1) + frame;
 			relative = relative.substring(0, relative.length() - 1);
 		}
-		if(frame.isEmpty()) {
-			frameNumber = 0;
-		} else {
-			frameNumber = Integer.parseInt(frame);
-		}
 		if(!relative.isEmpty() && BLENDING_MODES.contains(relative.charAt(relative.length() - 1) + "")) {
 			relative = relative.substring(0, relative.length() - 1);
+			frameNumber = Integer.parseInt(frame);
+		} else {
+			relative = relative + frame;
+			frameNumber = 0;
 		}
 		this.name = relative;
 		this.isImage = isImage;
