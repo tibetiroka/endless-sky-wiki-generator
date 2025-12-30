@@ -1,5 +1,5 @@
 import {ObjectData} from "./ObjectData";
-import {getParts, ReferenceData, ReferenceSource} from "./ReferenceSource.ts";
+import {encodeSourceName, getParts, ReferenceData, ReferenceSource} from "./ReferenceSource.ts";
 import {fetchData} from "../web_utils.ts";
 import {ChangeData} from "./ChangeData.ts";
 import {findSource} from "../utils.ts";
@@ -30,7 +30,7 @@ export function getData(source: ReferenceSource): Promise<ObjectData> {
 		// data is cached
 		return DATA_CACHE.get(cacheKey) as Promise<ObjectData>;
 	}
-	const promise: Promise<ObjectData> = fetchData('data/' + getParts(source)[0] + '/data/' + getParts(source)[1])
+	const promise: Promise<ObjectData> = fetchData('data/' + getParts(source)[0] + '/data/' + encodeSourceName(getParts(source)[1]))
 		.then(json => JSON.parse(json))
 		.then(json => {
 			const data: ObjectData = new ObjectData(source, json);
@@ -47,7 +47,7 @@ export function getChangelog(source: ReferenceSource): Promise<ChangeData[]> {
 		// data is cached
 		return CHANGELOG_CACHE.get(cacheKey) as Promise<ChangeData[]>;
 	}
-	const promise: Promise<ChangeData[]> = fetchData('data/' + getParts(source)[0] + '/changelog/' + getParts(source)[1])
+	const promise: Promise<ChangeData[]> = fetchData('data/' + getParts(source)[0] + '/changelog/' + encodeSourceName(getParts(source)[1]))
 		.then(json => JSON.parse(json))
 		.then(json => {
 			const changelog = json as ChangeData[];

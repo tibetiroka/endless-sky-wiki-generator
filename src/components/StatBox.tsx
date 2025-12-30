@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ReferenceSource, toString} from "../data/ReferenceSource.ts";
+import {encodeSourceName, ReferenceSource, toString} from "../data/ReferenceSource.ts";
 import {getData} from "../data/DataFetcher.ts";
 import {ReactElement, useState} from "react";
 import {ObjectData} from "../data/ObjectData.ts";
@@ -315,17 +315,26 @@ type CombinedImageDisplayProps = { data: ObjectData };
 
 function CombinedImageDisplay(props: CombinedImageDisplayProps) {
 	const images: { name: string, animation?: string }[] = [];
+
+	function toEncodedString(source: ReferenceSource): string {
+		return source.type + '/' + encodeSourceName(source.name as string);
+	}
+
 	images.push({
 		name: 'Thumbnail',
-		animation: props.data.getData()['thumbnail'] ? toString(props.data.getSource()) + '/thumbnail' : undefined
+		animation: props.data.getData()['thumbnail'] ? toEncodedString(props.data.getSource()) + '/thumbnail' : undefined
 	});
 	images.push({
 		name: 'Overhead',
-		animation: props.data.getData()['sprite'] ? toString(props.data.getSource()) + '/sprite' : undefined
+		animation: props.data.getData()['sprite'] ? toEncodedString(props.data.getSource()) + '/sprite' : undefined
 	});
 	images.push({
 		name: 'Landscape',
-		animation: props.data.getData()['landscape'] ? toString(props.data.getSource()) + '/landscape' : undefined
+		animation: props.data.getData()['landscape'] ? toEncodedString(props.data.getSource()) + '/landscape' : undefined
+	});
+	images.push({
+		name: 'Icon',
+		animation: props.data.getData()['icon'] ? toEncodedString(props.data.getSource()) + '/icon' : undefined
 	});
 
 	const existingImages = images.filter(image => image.animation);

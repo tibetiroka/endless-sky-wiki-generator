@@ -25,6 +25,11 @@ export function toString(source: ReferenceSource): string {
 	return source.type + '/' + (source.name as string);
 }
 
+// Encodes a source name for query file urls
+export function encodeSourceName(name: string): string {
+	return name.replaceAll('/', '$');
+}
+
 export function isLicense(source: ReferenceSource): boolean {
 	return source.type === 'outfit' && (source.name?.endsWith(" License") ?? false);
 }
@@ -57,6 +62,7 @@ export function typeToString(source: ReferenceSource): string {
 	return source.type;
 }
 
+// Get a link to the source's wiki page
 export function toURL(source: ReferenceSource): URL {
 	if (source.name === null) {
 		return new URL(HOME_PATH + '/' + source.type, getDomainWithProtocol());
