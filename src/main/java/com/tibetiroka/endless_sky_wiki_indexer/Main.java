@@ -256,6 +256,14 @@ public class Main implements Callable<Integer> {
 					addReference(indices, "ship", base, source);
 				}
 			}
+			case "galaxy", "hazard", "star", "effect", "swizzle" -> {
+			}
+			case "government" -> {
+				String swizzle = (String) data.get("swizzle");
+				if(swizzle != null) {
+					addReference(indices, "swizzle", swizzle, source);
+				}
+			}
 			case "system" -> {
 				String government = (String) data.get("government");
 				if(government != null) {
@@ -317,6 +325,40 @@ public class Main implements Callable<Integer> {
 						addReference(indices, "minable", ((Map<String, String>) minable).get("name"), source);
 					}
 				}
+				Object hazards = data.get("hazard");
+				if(hazards != null) {
+					if(!(hazards instanceof List)) {
+						hazards = List.of(hazards);
+					}
+					for(Object hazard : ((List<?>) hazards)) {
+						addReference(indices, "hazard", ((Map<String, String>) hazard).get("name"), source);
+					}
+				}
+			}
+			case "wormhole" -> {
+				Object links = data.get("link");
+				if(links != null) {
+					if(!(links instanceof List)) {
+						links = List.of(links);
+					}
+					for(Object link : ((List<?>) links)) {
+						addReference(indices, "system", ((Map<String, String>) link).get("name"), source);
+						addReference(indices, "wormhole", source.name(), new ReferenceSource("system", ((Map<String, String>) link).get("name")));
+						List<String> values = ((Map<String, List<String>>) link).get("values");
+						for(String value : values) {
+							addReference(indices, "system", value, source);
+							addReference(indices, "wormhole", source.name(), new ReferenceSource("system", value));
+						}
+					}
+				}
+			}
+			case "landing message" -> {
+				data.keySet()
+						.stream()
+						.filter(key -> !key.equals("name"))
+						.forEach(object -> {
+							addReference(indices, "landable", object, source);
+						});
 			}
 			case "category" -> {
 				data.keySet().forEach(key -> {
