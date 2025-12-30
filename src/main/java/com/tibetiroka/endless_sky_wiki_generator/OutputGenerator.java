@@ -31,14 +31,21 @@ public class OutputGenerator {
 		outputs = new HashMap<>();
 		outputs.put("ship", new OutputBuffer());
 		outputs.put("outfit", new OutputBuffer());
+		outputs.put("galaxy", new OutputBuffer());
 		outputs.put("system", new OutputBuffer());
+		outputs.put("hazard", new OutputBuffer());
+		outputs.put("star", new OutputBuffer());
 		outputs.put("planet", new OutputBuffer());
+		outputs.put("wormhole", new OutputBuffer());
 		outputs.put("shipyard", new OutputBuffer());
 		outputs.put("outfitter", new OutputBuffer());
 		outputs.put("category", new OutputBuffer());
 		outputs.put("fleet", new OutputBuffer());
 		outputs.put("government", new OutputBuffer());
 		outputs.put("minable", new OutputBuffer());
+		outputs.put("landing message", new OutputBuffer());
+		outputs.put("effect", new OutputBuffer());
+		outputs.put("swizzle", new OutputBuffer());
 	}
 
 	public OutputGenerator(@NotNull List<@NotNull DataNode> oldNodes) {
