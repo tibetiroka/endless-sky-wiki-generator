@@ -17,11 +17,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 public class OutputGenerator {
 	private final Map<String, OutputBuffer> outputs;
@@ -101,6 +99,10 @@ public class OutputGenerator {
 			save(array, new File(saveDir, "changelog.json"));
 		}
 
+		private static String encode(String text) {
+			return text.replace('/', '$');
+		}
+
 		private static void save(@NotNull JsonElement data, @NotNull File file) {
 			file.getParentFile().mkdirs();
 			try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -143,13 +145,13 @@ public class OutputGenerator {
 			save(globalChangelog, new File(saveDir, "changelog.json"));
 
 			File changelogDir = new File(saveDir, "changelog");
-			changelogs.forEach((name, data) -> save(data, new File(changelogDir, name)));
+			changelogs.forEach((name, data) -> save(data, new File(changelogDir, encode(name))));
 
 			File dataDir = new File(saveDir, "data");
-			removed.forEach((key, data) -> save(data, new File(dataDir, key)));
+			removed.forEach((key, data) -> save(data, new File(dataDir, encode(key))));
 			JsonObject data = newData.toJson();
 			for(String key : data.keySet()) {
-				save(data.get(key), new File(dataDir, key));
+				save(data.get(key), new File(dataDir, encode(key)));
 			}
 		}
 	}
