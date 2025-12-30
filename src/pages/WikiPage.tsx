@@ -14,7 +14,7 @@ import {
 	isMultiPart,
 	ReferenceSource,
 	typeToString
-} from "./data/ReferenceSource.ts";
+} from "../data/ReferenceSource.ts";
 import React, {ReactElement, useState} from "react";
 import {
 	getChangelog,
@@ -23,17 +23,17 @@ import {
 	getDisplayName,
 	getInteractiveFileURL,
 	getReferences
-} from "./data/DataFetcher.ts";
-import {ObjectData} from './data/ObjectData.ts'
-import {findSource} from "./utils.ts";
+} from "../data/DataFetcher.ts";
+import {ObjectData} from '../data/ObjectData.ts'
+import {findSource} from "../utils.ts";
 import {Alert} from "react-bootstrap";
-import {CommitData} from "./data/CommitData.ts";
-import {ChangeData} from "./data/ChangeData.ts";
-import {ReferenceLink, ReferenceLinkList} from "./components/ReferenceLink.tsx";
-import {Changelog} from "./components/Changelog.tsx";
-import {StatBox} from "./components/StatBox.tsx";
-import {GoHome} from "./components/GoHome.tsx";
-import {ComparisonSingleItemNavigation} from "./components/ComparisonNavigation.tsx";
+import {CommitData} from "../data/CommitData.ts";
+import {ChangeData} from "../data/ChangeData.ts";
+import {ReferenceLink, ReferenceLinkList} from "../components/ReferenceLink.tsx";
+import {Changelog} from "../components/Changelog.tsx";
+import {StatBox} from "../components/StatBox.tsx";
+import {GoHome} from "../components/GoHome.tsx";
+import {ComparisonSingleItemNavigation} from "../components/ComparisonNavigation.tsx";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -146,7 +146,7 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 	const stubTypes: string[] = ["system", "government", "minable"];
 	if (!title && (stubTypes.includes(source.type) || isMultiPart(source))) {
 		stubNotice = <Alert variant="warning">
-			This article is automatically generated and is a stub. You can read about how to expand it <a href='/'>here: todo</a>.
+			This article is automatically generated and is a stub. You can read about how to expand it <a href='/public'>here: todo</a>.
 		</Alert>
 	}
 

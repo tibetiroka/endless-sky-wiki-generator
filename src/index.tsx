@@ -6,10 +6,10 @@ import ReactDOM from 'react-dom/client';
 
 import SharedLayout, {updateDarkMode} from "./SharedLayout";
 import {BrowserRouter, Route, Routes} from "react-router";
-import Home from "./Home";
+import Home from "./pages/Home";
 import Comparison from "./Comparison.tsx";
 import {ReferenceSource} from "./data/ReferenceSource.ts";
-import WikiPage from "./WikiPage.tsx";
+import WikiPage from "./pages/WikiPage.tsx";
 import {getCurrentSource, HOME_PATH, isOfficial} from "./web_utils.ts";
 import {GoHome} from "./components/GoHome.tsx";
 import {CUSTOM_PAGES} from "./components/SearchBox.tsx";
