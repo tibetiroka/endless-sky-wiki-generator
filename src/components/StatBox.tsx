@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {encodeSourceName, ReferenceSource, toString} from "../data/ReferenceSource.ts";
+import {encodeSourceName, ReferenceSource} from "../data/ReferenceSource.ts";
 import {getData} from "../data/DataFetcher.ts";
 import {ReactElement, useState} from "react";
 import {ObjectData} from "../data/ObjectData.ts";
@@ -61,7 +61,7 @@ export function StatBox(props: StatBoxProps) {
 		['weapon', 'homing'], ['weapon', 'sound'], ['weapon', 'hit effect'], ['weapon', 'sprite'], ['weapon', 'hardpoint sprite'],
 		['weapon', 'hardpoint offset'], ['weapon', 'turret turn'], ['weapon', 'fire effect']
 	];
-	[...displayedPaths].map(p=>displayedPaths.push(['attributes', ...p]));
+	[...displayedPaths].map(p => displayedPaths.push(['attributes', ...p]));
 
 	function StatRow(hideIfDefault: boolean, attribute: string, name?: string, source: string[] = ['attributes'], computeMode?: string, defaultValue: any = '0') {
 		let usedName = name ?? capitalizeWords(attribute);
@@ -100,7 +100,7 @@ export function StatBox(props: StatBoxProps) {
 				if (result) {
 					const parsed = Number.parseFloat(result);
 					if (isNaN(parsed)) {
-						if(defaultValue) {
+						if (defaultValue) {
 							result = defaultValue;
 						}
 					} else {
@@ -119,11 +119,11 @@ export function StatBox(props: StatBoxProps) {
 
 		const allNegative = values.every(value => value === defaultValue || value === '' || value[0] === '-')
 			&& !values.every(value => value === defaultValue || value === '');
-		if(allNegative && !name) {
-			if(!usedName.includes('Required')) {
+		if (allNegative && !name) {
+			if (!usedName.includes('Required')) {
 				usedName += ' Required';
 			}
-			values = values.map(v => (typeof(v) === 'string' && v[0] === '-') ? v.substring(1) : v);
+			values = values.map(v => (typeof (v) === 'string' && v[0] === '-') ? v.substring(1) : v);
 		}
 
 		return <tr key={attribute + '_' + usedName + '_' + (computeMode ?? '')}>

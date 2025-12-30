@@ -261,6 +261,7 @@ export function LandingLocationGenerator(source: ReferenceSource, title?: string
 
 export function LinkGenerator(source: ReferenceSource, title?: string) {
 	let [links, setLinks] = useState(undefined as ReactElement | undefined);
+	let [wormholes, setWormholes] = useState(undefined as ReactElement | undefined);
 	if (!links && source.type === 'system') {
 		getData(source).then(data => {
 			const dataLinks: string | string[] | undefined = data.getData()['link'];
@@ -279,8 +280,55 @@ export function LinkGenerator(source: ReferenceSource, title?: string) {
 			}
 		});
 	}
+	if (!wormholes && source.type === 'system') {
+		getReferences(source.type).then(references => {
+			let myReferences: ReferenceSource[] = references[source.name as string] ?? [];
+			if (myReferences) {
+				myReferences = myReferences.filter(reference => reference.type === 'wormhole');
+				if(myReferences.length > 0) {
+					Promise.all(myReferences.map(wormhole => getData(wormhole))).then(wormholes => {
+						const from: string[] = [];
+						const to: string[] = [];
 
-	return links;
+						for (const wormhole of wormholes) {
+							const dataLinks = wormhole.getData().link;
+							if(dataLinks) {
+								const linkArray: any[] = Array.isArray(dataLinks) ? (dataLinks as any[]) : [dataLinks];
+								for (const link of linkArray) {
+									if(link.name === source.name) {
+										link.values?.forEach((value: string) => to.push(value));
+									}
+									else if(link.values && link.values.includes(source.name)) {
+										from.push(link.name);
+									}
+								}
+							}
+						}
+						setWormholes(<>
+							{
+								from.length === 0 ? undefined :
+									<>Incoming wormholes from:
+										<ReferenceLinkList sources={from.map(s=>new ReferenceSource('system', s))}/>
+									</>
+							}
+							{
+								from.length === 0 ? undefined :
+									<>Outgoing wormholes to:
+										<ReferenceLinkList sources={to.map(s=>new ReferenceSource('system', s))}/>
+									</>
+							}
+						</>);
+					});
+				} else {
+					setWormholes(<></>);
+				}
+			} else {
+				setWormholes(<></>);
+			}
+		});
+	}
+
+	return <>{links}{wormholes}</>;
 }
 
 export function LocationGenerator(source: ReferenceSource, title?: string) {
@@ -548,8 +596,8 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 						<h2>Ships</h2>
 						<ReferenceLinkList sources={myReferences} categoryType={getParts(source)[1] === 'ship' ? undefined : 'ship'}
 										   title={getParts(source)[1] === 'bay type' ?
-											   <summary>Ships with bays of this type:</summary> :
-											   <summary>This category contains the following ships:</summary>}/>
+											   'Ships with bays of this type:' :
+											   'This category contains the following ships:'}/>
 					</section>);
 				} else {
 					setShips(null);
