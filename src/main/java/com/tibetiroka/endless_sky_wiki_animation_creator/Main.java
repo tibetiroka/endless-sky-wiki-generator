@@ -50,105 +50,116 @@ public class Main {
 		createAnimations(output, frames, animations, new File(repo, "images/outfit/unknown.png"));
 	}
 
+	private static void createAnimation(Animation animation, List<File> usedFrames, File defaultFile, File outputFile) {
+		if(usedFrames == null) {
+			usedFrames = List.of(defaultFile);
+		}
+
+		if(animation.startFrame != 0) {
+			ArrayList<File> reorderedFrames = new ArrayList<>();
+			reorderedFrames.addAll(usedFrames.subList(Math.min(animation.startFrame, usedFrames.size() - 1), usedFrames.size()));
+			reorderedFrames.addAll(usedFrames.subList(0, Math.min(animation.startFrame, usedFrames.size())));
+			usedFrames = reorderedFrames;
+		}
+		if(animation.rewind) {
+			ArrayList<File> repeatedFrames = new ArrayList<>();
+			repeatedFrames.addAll(usedFrames);
+			repeatedFrames.addAll(usedFrames.subList(0, usedFrames.size() - 1).reversed());
+			if(usedFrames.size() == 1) {
+				repeatedFrames.add(usedFrames.getFirst());
+			}
+			usedFrames = repeatedFrames;
+		}
+
+		if(usedFrames.size() <= 1) {
+			if(!usedFrames.isEmpty()) {
+				try {
+					outputFile.getParentFile().mkdirs();
+					Files.copy(usedFrames.getFirst().toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				} catch(IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		} else {
+			List<String> command = new ArrayList<>();
+			command.add("ffmpeg");
+			command.add("-loglevel");
+			command.add("warning");
+			command.add("-y");
+			command.add("-r");
+			command.add(Double.toString(1. / animation.timePerFrame));
+			for(File frame : usedFrames) {
+				boolean isVideo = switch(frame.getName().substring(frame.getName().lastIndexOf('.'))) {
+					case ".avi", ".avif" -> true;
+					default -> false;
+				};
+				if(!isVideo) {
+					command.add("-t");
+					command.add(Double.toString(animation.timePerFrame));
+				}
+				command.add("-i");
+				command.add(frame.getAbsolutePath());
+			}
+			command.add("-filter_complex");
+			int frameCount = usedFrames.size();
+			command.add(String.join("", IntStream.range(0, frameCount).mapToObj(
+					i -> {
+						if(animation.rewind && frameCount == 2 && i == 1) {
+							return "[1:v]setsar=sar=1,reverse[out1];";
+						}
+						return "[" + i + ":v]setsar=sar=1[out" + i + "];";
+					}).toList())
+			            + String.join("", IntStream.range(0, frameCount).mapToObj(
+					i -> "[out" + i + "]").toList())
+			            + "concat=n=" + frameCount + ":v=1:a=0[out]");
+			command.add("-map");
+			command.add("[out]");
+			command.add("-loop");
+			command.add("0");
+			command.add("-framerate");
+			command.add(Double.toString(1. / animation.timePerFrame));
+
+			File output = new File(outputFile.getParentFile(), outputFile.getName() + ".webp");
+			output.getParentFile().mkdirs();
+			command.add(output.getAbsolutePath());
+			try {
+				System.out.println(String.join(" ", command));
+				int code = new ProcessBuilder(command)
+						.inheritIO()
+						.start()
+						.waitFor();
+				if(code != 0) {
+					System.exit(code);
+				}
+				Files.move(output.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} catch(IOException | InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
 	private static void createAnimations(File outputDir, HashMap<String, List<File>> frames, HashMap<String, Animation> animations, File defaultFile) {
 		if(!outputDir.exists()) {
 			outputDir.mkdirs();
 		}
+
 		animations
 				.entrySet()
 				.stream()
 				.parallel()
 				.forEach(entry -> {
+					createAnimation(entry.getValue(), frames.get(entry.getValue().name), defaultFile, new File(outputDir, entry.getKey()));
+				});
+		frames
+				.entrySet()
+				.stream()
+				.parallel()
+				.forEach(entry -> {
 					String name = entry.getKey();
-					Animation animation = entry.getValue();
-
-					List<File> usedFrames = frames.get(animation.name);
-					if(usedFrames == null) {
-						usedFrames = List.of(defaultFile);
+					if(entry.getKey().contains(".")) {
+						name = name.substring(0, name.lastIndexOf('.'));
 					}
-
-					if(animation.startFrame != 0) {
-						ArrayList<File> reorderedFrames = new ArrayList<>();
-						reorderedFrames.addAll(usedFrames.subList(Math.min(animation.startFrame, usedFrames.size() - 1), usedFrames.size()));
-						reorderedFrames.addAll(usedFrames.subList(0, Math.min(animation.startFrame, usedFrames.size())));
-						usedFrames = reorderedFrames;
-					}
-					if(animation.rewind) {
-						ArrayList<File> repeatedFrames = new ArrayList<>();
-						repeatedFrames.addAll(usedFrames);
-						repeatedFrames.addAll(usedFrames.subList(0, usedFrames.size() - 1).reversed());
-						if(usedFrames.size() == 1) {
-							repeatedFrames.add(usedFrames.getFirst());
-						}
-						usedFrames = repeatedFrames;
-					}
-
-					if(usedFrames.size() <= 1) {
-						if(!usedFrames.isEmpty()) {
-							try {
-								File output = new File(outputDir, name);
-								output.getParentFile().mkdirs();
-								Files.copy(usedFrames.getFirst().toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
-							} catch(IOException e) {
-								throw new RuntimeException(e);
-							}
-						}
-					} else {
-						List<String> command = new ArrayList<>();
-						command.add("ffmpeg");
-						command.add("-loglevel");
-						command.add("warning");
-						command.add("-y");
-						command.add("-r");
-						command.add(Double.toString(1. / animation.timePerFrame));
-						for(File frame : usedFrames) {
-							boolean isVideo = switch(frame.getName().substring(frame.getName().lastIndexOf('.'))) {
-								case ".avi", ".avif" -> true;
-								default -> false;
-							};
-							if(!isVideo) {
-								command.add("-t");
-								command.add(Double.toString(animation.timePerFrame));
-							}
-							command.add("-i");
-							command.add(frame.getAbsolutePath());
-						}
-						command.add("-filter_complex");
-						int frameCount = usedFrames.size();
-						command.add(String.join("", IntStream.range(0, frameCount).mapToObj(
-								i -> {
-									if(animation.rewind && frameCount == 2 && i == 1) {
-										return "[1:v]setsar=sar=1,reverse[out1];";
-									}
-									return "[" + i + ":v]setsar=sar=1[out" + i + "];";
-								}).toList())
-						            + String.join("", IntStream.range(0, frameCount).mapToObj(
-								i -> "[out" + i + "]").toList())
-						            + "concat=n=" + frameCount + ":v=1:a=0[out]");
-						command.add("-map");
-						command.add("[out]");
-						command.add("-loop");
-						command.add("0");
-						command.add("-framerate");
-						command.add(Double.toString(1. / animation.timePerFrame));
-
-						File output = new File(outputDir, name + ".webp");
-						output.getParentFile().mkdirs();
-						command.add(output.getAbsolutePath());
-						try {
-							System.out.println(String.join(" ", command));
-							int code = new ProcessBuilder(command)
-									.inheritIO()
-									.start()
-									.waitFor();
-							if(code != 0) {
-								System.exit(code);
-							}
-							Files.move(output.toPath(), new File(output.getParentFile(), output.getName().substring(0, output.getName().lastIndexOf('.'))).toPath(), StandardCopyOption.REPLACE_EXISTING);
-						} catch(IOException | InterruptedException e) {
-							throw new RuntimeException(e);
-						}
-					}
+					createAnimation(new Animation(entry.getKey()), entry.getValue(), defaultFile, new File(outputDir, "everything/" + name));
 				});
 	}
 
