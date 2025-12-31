@@ -4,6 +4,7 @@ import {fetchData} from "../web_utils.ts";
 import {ChangeData} from "./ChangeData.ts";
 import {findSource} from "../utils.ts";
 import {GameFileList} from "./GameFileList.ts";
+import {GameObject} from "./DataScheme.tsx";
 
 const ES_DATA_ROOT: string = "https://raw.githubusercontent.com/endless-sky/endless-sky/";
 const ES_HISTORY_ROOT: string = "https://github.com/endless-sky/endless-sky/commit/";
@@ -12,6 +13,7 @@ const ES_DEFAULT_REF: string = "refs/heads/master";
 const ES_DEFAULT_INTERACTIVE_REF: string = "master";
 
 const DATA_CACHE = new Map<ReferenceSource, Promise<ObjectData>>();
+const PARSED_DATA_CACHE = new Map<ReferenceSource, Promise<GameObject>>();
 const CHANGELOG_CACHE = new Map<ReferenceSource, Promise<ChangeData[]>>();
 
 type DisplayNameData = { [U: string]: ReferenceSource[] };
@@ -37,6 +39,17 @@ export function getData(source: ReferenceSource): Promise<ObjectData> {
 			return Promise.resolve(data);
 		});
 	DATA_CACHE.set(source, promise);
+	return promise;
+}
+
+export function getParsedData(source: ReferenceSource): Promise<GameObject> {
+	const cacheKey: ReferenceSource | null = findSource(source, PARSED_DATA_CACHE.keys());
+	if (cacheKey) {
+		// data is cached
+		return PARSED_DATA_CACHE.get(cacheKey) as Promise<GameObject>;
+	}
+	const promise: Promise<GameObject> = getData(source).then(data => data.parse());
+	PARSED_DATA_CACHE.set(source, promise);
 	return promise;
 }
 

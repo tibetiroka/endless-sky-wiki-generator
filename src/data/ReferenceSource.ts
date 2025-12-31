@@ -10,6 +10,7 @@
 
 import {getDomainWithProtocol, HOME_PATH} from "../web_utils.ts";
 import {equals} from "../utils.ts";
+import {getReferences} from "./DataFetcher.ts";
 
 export class ReferenceSource {
 	type: string = '???';
@@ -51,10 +52,10 @@ export function getParts(source: ReferenceSource): string[] {
 }
 
 export function typeToString(source: ReferenceSource): string {
-	if(isMultiPart(source)) {
+	if (isMultiPart(source)) {
 		const parts = getParts(source);
 		const validParts = ['series', 'bay type'];
-		if(parts[0] === 'category' && validParts.includes(parts[1])) {
+		if (parts[0] === 'category' && validParts.includes(parts[1])) {
 			return parts[1];
 		}
 		return parts[1] + ' ' + parts[0];
@@ -103,3 +104,8 @@ export class ReferenceSourceIndex {
 }
 
 export type ReferenceData = { [key: string]: ReferenceSource[] };
+
+// Gets all references to a source from a given type. For instance, all type=shipyard where a ReferenceSource{type=ship, name=Falcon} is sold.
+export function getAllReferences(to: ReferenceSource, type: string) {
+	return getReferences(to.type).then(references => (references[to.name as string] ?? []).filter(reference => reference.type === type));
+}

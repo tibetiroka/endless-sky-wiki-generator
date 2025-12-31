@@ -8,6 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 import {
+	getAllReferences,
 	getLicenseName,
 	getParts,
 	isLicense,
@@ -22,6 +23,7 @@ import {
 	getData,
 	getDisplayName,
 	getInteractiveFileURL,
+	getParsedData,
 	getReferences
 } from "../data/DataFetcher.ts";
 import {ObjectData} from '../data/ObjectData.ts'
@@ -34,6 +36,16 @@ import {Changelog} from "../components/Changelog.tsx";
 import {StatBox} from "../components/StatBox.tsx";
 import {GoHome} from "../components/GoHome.tsx";
 import {ComparisonSingleItemNavigation} from "../components/ComparisonNavigation.tsx";
+import {
+	ConditionalText,
+	Fleet,
+	getAllReferenceObjects,
+	Planet,
+	Ship,
+	Shop,
+	System,
+	Wormhole
+} from "../data/DataScheme.tsx";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -53,8 +65,7 @@ export class PageGenerator {
 	fleets?: SectionGenerator = FleetListGenerator;
 	trivia?: SectionGenerator = TriviaGenerator;
 
-	static empty(): PageGenerator
-	{
+	static empty(): PageGenerator {
 		const gen = new PageGenerator();
 		gen.stats = undefined;
 		gen.description = undefined;
@@ -184,21 +195,17 @@ export function PreambleGenerator(source: ReferenceSource, title?: string) {
 export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 	let [description, setDescription] = useState(undefined as ReactElement | undefined);
 	if (!description) {
-		getData(source).then(data => {
-			const desc: string[] | undefined | string = data.getData().description;
+		getParsedData(source).then(data => {
+			const desc = (data as any).description;
 			if (desc) {
-				description = <section>
+				setDescription(<section>
 					<h2>Description</h2>
-					{(typeof desc === 'string') ? <p>{desc}</p> : (desc as any[]).map(text => {
-							if (text.name) {
-								return <p key={text.name} style={{fontStyle: "italic"}} title='This text is not always displayed in-game.'>{text.name}</p>
-							} else {
-								return <p key={text}>{text}</p>;
-							}
-						}
-					)}
-				</section>;
-				setDescription(description);
+					{
+						(typeof desc === 'string') ? <p>{desc}</p> : (desc as ConditionalText).toElement()
+					}
+				</section>);
+			} else {
+				setDescription(<></>);
 			}
 		});
 	}
@@ -208,7 +215,8 @@ export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 export function StatsGenerator(source: ReferenceSource, title?: string) {
 	return <div className='side-stat-box'>
 		<StatBox elements={[source]}/>
-		{(source.type === 'ship' || source.type === 'outfit') ? <ComparisonSingleItemNavigation source={source}/> : <></>}
+		{(source.type === 'ship' || source.type === 'outfit') ?
+			<ComparisonSingleItemNavigation source={source}/> : <></>}
 	</div>
 }
 
@@ -263,14 +271,12 @@ export function LinkGenerator(source: ReferenceSource, title?: string) {
 	let [links, setLinks] = useState(undefined as ReactElement | undefined);
 	let [wormholes, setWormholes] = useState(undefined as ReactElement | undefined);
 	if (!links && source.type === 'system') {
-		getData(source).then(data => {
-			const dataLinks: string | string[] | undefined = data.getData()['link'];
-			if (dataLinks) {
-				const linkArray: string[] = typeof dataLinks === 'string' ? [dataLinks] : (dataLinks as string[]);
+		getParsedData(source).then(data => data as System).then(data => {
+			if (data.links.length > 0) {
 				setLinks(<section>
 					<h2>Links</h2>
-					<ReferenceLinkList sources={linkArray.map(link => new ReferenceSource('system', link))}
-									   title={<>{data.displayName} links to {linkArray.length === 1 ? '1 system' : linkArray.length + ' systems'}:</>}/>
+					<ReferenceLinkList sources={data.links.map(link => new ReferenceSource('system', link))}
+									   title={<>{data.displayName} links to {data.links.length === 1 ? '1 system' : data.links.length + ' systems'}:</>}/>
 				</section>);
 			} else {
 				setLinks(<section>
@@ -281,50 +287,33 @@ export function LinkGenerator(source: ReferenceSource, title?: string) {
 		});
 	}
 	if (!wormholes && source.type === 'system') {
-		getReferences(source.type).then(references => {
-			let myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-			if (myReferences) {
-				myReferences = myReferences.filter(reference => reference.type === 'wormhole');
-				if(myReferences.length > 0) {
-					Promise.all(myReferences.map(wormhole => getData(wormhole))).then(wormholes => {
-						const from: string[] = [];
-						const to: string[] = [];
+		getAllReferenceObjects(source, 'wormhole').then(wormholes => wormholes as Wormhole[]).then(wormholes => {
+			const from: string[] = [];
+			const to: string[] = [];
 
-						for (const wormhole of wormholes) {
-							const dataLinks = wormhole.getData().link;
-							if(dataLinks) {
-								const linkArray: any[] = Array.isArray(dataLinks) ? (dataLinks as any[]) : [dataLinks];
-								for (const link of linkArray) {
-									if(link.name === source.name) {
-										link.values?.forEach((value: string) => to.push(value));
-									}
-									else if(link.values && link.values.includes(source.name)) {
-										from.push(link.name);
-									}
-								}
-							}
-						}
-						setWormholes(<>
-							{
-								from.length === 0 ? undefined :
-									<>Incoming wormholes from:
-										<ReferenceLinkList sources={from.map(s=>new ReferenceSource('system', s))}/>
-									</>
-							}
-							{
-								from.length === 0 ? undefined :
-									<>Outgoing wormholes to:
-										<ReferenceLinkList sources={to.map(s=>new ReferenceSource('system', s))}/>
-									</>
-							}
-						</>);
-					});
-				} else {
-					setWormholes(<></>);
+			for (const wormhole of wormholes) {
+				for (const link of wormhole.links) {
+					if(link.from === source.name) {
+						to.push(link.to);
+					} else if(link.to === source.name) {
+						from.push(link.from);
+					}
 				}
-			} else {
-				setWormholes(<></>);
 			}
+			setWormholes(<>
+				{
+					from.length === 0 ? undefined :
+						<>Incoming wormholes from:
+							<ReferenceLinkList sources={from.map(s => new ReferenceSource('system', s))}/>
+						</>
+				}
+				{
+					from.length === 0 ? undefined :
+						<>Outgoing wormholes to:
+							<ReferenceLinkList sources={to.map(s => new ReferenceSource('system', s))}/>
+						</>
+				}
+			</>);
 		});
 	}
 
@@ -336,21 +325,17 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 	if (!location) {
 		switch (source.type) {
 			case 'fleet':
-				getReferences(source.type).then(references => {
-					let myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-					if (myReferences) {
-						myReferences = myReferences.filter(reference => reference.type === 'system');
-						if (myReferences.length > 0) {
-							setLocation(<section>
-								<h2>Location</h2>
-								<ReferenceLinkList sources={myReferences} title='This fleet can appear in the following systems:'/>
-							</section>);
-						} else {
-							setLocation(<section>
-								<h2>Location</h2>
-								This fleet doesn't appear in any system.
-							</section>);
-						}
+				getAllReferences(source, 'system').then(references => {
+					if (references.length > 0) {
+						setLocation(<section>
+							<h2>Location</h2>
+							<ReferenceLinkList sources={references} title='This fleet can appear in the following systems:'/>
+						</section>);
+					} else {
+						setLocation(<section>
+							<h2>Location</h2>
+							This fleet doesn't appear in any system.
+						</section>);
 					}
 				});
 				break;
@@ -380,9 +365,7 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 				});
 				break;
 			case 'minable':
-				getReferences(source.type).then(references => {
-					const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-					const systems: ReferenceSource[] = myReferences.filter(source => source.type === 'system');
+				getAllReferences(source, 'system').then(systems => {
 					if (systems.length > 0) {
 						setLocation(<section>
 							<h2>Location</h2>
@@ -398,13 +381,14 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 				break;
 			case 'outfitter':
 			case 'shipyard':
-				getReferences(source.type).then(references => {
-					getData(source).then(data => {
-						const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-						const planets: ReferenceSource[] = myReferences.filter(source => source.type === 'planet');
+				getAllReferences(source, 'planet').then(planets => {
+					getParsedData(source).then(data => data as Shop).then(data => {
 						let conditional;
-						if (Object.keys(data.getData()).includes('location')) {
+						if (data.hasLocationFilter) {
 							conditional = <p>This {source.type} may appear on other planets conditionally.</p>
+						}
+						if(data.hasToSell) {
+							conditional = <>{conditional}<p>This {source.type} might not be available at all times.</p></>
 						}
 						if (planets.length > 0) {
 							setLocation(<section>
@@ -423,9 +407,7 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 				});
 				break;
 			case 'planet':
-				getReferences(source.type).then(references => {
-					const myReferences = references[source.name as string] ?? [];
-					const systems: ReferenceSource[] = myReferences.filter(source => source.type === 'system');
+				getAllReferences(source, 'system').then(systems => {
 					Promise.all(systems.map(system => getDisplayName(system))).then(systemNames => {
 						setLocation(<section>
 							<h2>Location</h2>
@@ -435,8 +417,7 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 									<>This planet appears in the <ReferenceLink source={systems[0]} displayName={systemNames[0]}/> system.</> :
 									<>This wormhole connects the <ReferenceLink source={systems[0]} displayName={systemNames[0]}/> and <ReferenceLink source={systems[1]} displayName={systemNames[1]}/> systems.</>)}
 						</section>);
-					})
-
+					});
 				});
 				break;
 		}
@@ -448,16 +429,14 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 	let [outfits, setOutfits] = useState(undefined as ReactElement | undefined | null);
 	if (outfits === undefined) {
 		if (source.type === 'ship') {
-			getData(source).then(data => {
-				// todo: check the parent ship, I don't even remember how that works
-				const outfits: string[] = Object.keys(data.getData()['outfits'] ?? {});
-				if (outfits.length > 0) {
+			getParsedData(source).then(data => data as Ship).then(data => {
+				if (data.outfits.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
 						<ReferenceLinkList
-							sources={outfits.map(outfit => new ReferenceSource('outfit', outfit))}
+							sources={data.outfits.map(outfit => new ReferenceSource('outfit', outfit.name))}
 							categoryType='outfit'
-							counts={outfits.map(outfit => data.getData()['outfits'][outfit])}
+							counts={data.outfits.map(outfit => outfit.count)}
 							title={<>The {data.displayName} has the following outfits installed:</>}/>
 					</section>);
 				} else {
@@ -468,38 +447,29 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 				}
 			});
 		} else if (source.type === 'outfitter') {
-			getData(source).then(data => {
-				const blacklist = ['name', 'location', 'stock', 'to sell'];
-				let outfits: string[] = Object.keys(data.getData() ?? {});
-				outfits = outfits.filter(outfit => !blacklist.includes(outfit));
+			getParsedData(source).then(data => data as Shop).then(data => {
 				setOutfits(<section>
 						<h2>Outfits</h2>
-						{outfits.length > 0 ?
-							<ReferenceLinkList sources={outfits.map(outfit => new ReferenceSource('outfit', outfit))} categoryType={'outfit'} title='Outfits sold here:'/>
+						{data.stock.length > 0 ?
+							<ReferenceLinkList sources={data.stock.map(outfit => new ReferenceSource('outfit', outfit))} categoryType={'outfit'} title='Outfits sold here:'/>
 							: "This outfitter doesn't sell any outfits."}
-						{['location', 'stock'].some(key => data.getData()[key]) ?
-							<p>This outfitter may sell other outfits conditionally.</p>
-							: undefined}
 					</section>
 				);
 			});
 		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
-			getReferences(source.type).then(references => {
-				const myReferences = references[source.name as string] ?? [];
-				const outfitReferences = myReferences.filter(ref => ref.type === 'outfit');
-				if (outfitReferences.length > 0) {
+			getAllReferences(source, 'outfit').then(references => {
+				if (references.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
-						<ReferenceLinkList sources={myReferences} categoryType='outfit' title='This category contains the following outfits:'/>
+						<ReferenceLinkList sources={references} categoryType='outfit' title='This category contains the following outfits:'/>
 					</section>);
 				} else {
 					setOutfits(null);
 				}
 			});
 		} else if (isLicense(source)) {
-			getReferences('license').then(references => {
-				const myReferences = references[getLicenseName(source)] ?? [];
-				const outfitReferences = myReferences.filter(ref => ref.type === 'outfit' && ref.name !== source.name);
+			getAllReferences(new ReferenceSource('license', getLicenseName(source)), 'outfit').then(myReferences => {
+				const outfitReferences = myReferences.filter(ref => ref.name !== source.name);
 				if (outfitReferences.length > 0) {
 					setOutfits(<section>
 						<h2>Outfits</h2>
@@ -521,9 +491,7 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 	let [ships, setShips] = useState(undefined as ReactElement | undefined | null);
 	if (ships === undefined) {
 		if (source.type === 'outfit') {
-			getReferences(isLicense(source) ? 'license' : source.type).then(references => {
-				const myReferences: ReferenceSource[] = references[isLicense(source) ? getLicenseName(source) : source.name as string] ?? [];
-				const shipReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'ship')
+			getAllReferences(new ReferenceSource(isLicense(source) ? 'license' : source.type, isLicense(source) ? getLicenseName(source) : source.name), 'ship').then(shipReferences => {
 				if (isLicense(source)) {
 					if (shipReferences.length > 0) {
 						setShips(<section>
@@ -551,32 +519,26 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 				}
 			});
 		} else if (source.type === 'shipyard') {
-			getData(source).then(data => {
-				const blacklist = ['name', 'location', 'stock', 'to sell'];
-				let ships: string[] = Object.keys(data.getData() ?? {});
-				ships = ships.filter(outfit => !blacklist.includes(outfit));
+			getParsedData(source).then(data => data as Shop).then(data => {
 				setShips(<section>
 						<h2>Ships</h2>
-						{ships.length > 0 ?
-							<ReferenceLinkList sources={ships.map(ship => new ReferenceSource('ship', ship))} categoryType='ship' title='Ships sold here:'/>
+						{data.stock.length > 0 ?
+							<ReferenceLinkList sources={data.stock.map(ship => new ReferenceSource('ship', ship))} categoryType='ship' title='Ships sold here:'/>
 							: "This shipyard doesn't sell any ships."}
-						{['location', 'stock', 'to sell'].some(key => data.getData()[key]) ?
-							<p>This shipyard may sell other ships conditionally.</p>
-							: undefined}
 					</section>
 				);
 			});
 		} else if (source.type === 'fleet') {
-			getData(source).then(data => {
-				const variantArray = [].concat(data.getData()['variant'] ?? []);
-				if (variantArray.length > 0) {
+			getParsedData(source).then(data => data as Fleet).then(data => {
+				if (data.variants.length > 0) {
+					console.log(data);
 					setShips(<section>
 						<h2>Ships</h2>
 						This fleet has the following variants:
-						{variantArray.map((variant, index) =>
+						{data.variants.map((variant, index) =>
 							<ReferenceLinkList key={index.toString()}
-											   sources={Object.keys(variant).filter(s => s !== 'name').map(ship => new ReferenceSource('ship', ship))}
-											   counts={Object.keys(variant).filter(s => s !== 'name').map(ship => (typeof (variant[ship]) === 'string' ? Number.parseInt(variant[ship]) : 1))}
+											   sources={variant.map(ship => new ReferenceSource('ship', ship.name))}
+											   counts={variant.map(ship => ship.count)}
 							/>
 						)}
 					</section>);
@@ -588,13 +550,11 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 				}
 			});
 		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
-			getReferences(source.type).then(references => {
-				const myReferences = references[source.name as string] ?? [];
-				let shipReferences = myReferences.filter(ref => ref.type === 'ship');
+			getAllReferences(source, 'ship').then(shipReferences => {
 				if (shipReferences.length > 0) {
 					setShips(<section>
 						<h2>Ships</h2>
-						<ReferenceLinkList sources={myReferences} categoryType={getParts(source)[1] === 'ship' ? undefined : 'ship'}
+						<ReferenceLinkList sources={shipReferences} categoryType={getParts(source)[1] === 'ship' ? undefined : 'ship'}
 										   title={getParts(source)[1] === 'bay type' ?
 											   'Ships with bays of this type:' :
 											   'This category contains the following ships:'}/>
@@ -615,9 +575,7 @@ export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 			if (isLicense(source)) {
 				setOutfitters(<></>);
 			} else {
-				getReferences(source.type).then(references => {
-					const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-					const outfitterReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'outfitter');
+				getAllReferences(source, 'outfitter').then(outfitterReferences => {
 					if (outfitterReferences.length > 0) {
 						setOutfitters(<section>
 							<h2>Outfitters</h2>
@@ -632,15 +590,11 @@ export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 				});
 			}
 		} else if (source.type === 'planet') {
-			getData(source).then(data => {
-				let myOutfitters: string | string[] = data.getData()['outfitter'] ?? [];
-				if (typeof myOutfitters === 'string') {
-					myOutfitters = [myOutfitters];
-				}
-				if (myOutfitters.length > 0) {
+			getParsedData(source).then(data => data as Planet).then(data => {
+				if (data.outfitter.length > 0) {
 					setOutfitters(<section>
 						<h2>Outfitters</h2>
-						<ReferenceLinkList sources={myOutfitters.map(outfitter => new ReferenceSource('outfitter', outfitter))} title='This planet has the following outfitters available:'/>
+						<ReferenceLinkList sources={data.outfitter.map(outfitter => new ReferenceSource('outfitter', outfitter))} title='This planet has the following outfitters available:'/>
 					</section>);
 				} else {
 					setOutfitters(<section>
@@ -658,9 +612,7 @@ export function ShipyardGenerator(source: ReferenceSource, title?: string) {
 	let [shipyards, setShipyards] = useState(undefined as ReactElement | undefined);
 	if (!shipyards) {
 		if (source.type === 'ship') {
-			getReferences(source.type).then(references => {
-				const myReferences: ReferenceSource[] = references[source.name as string] ?? [];
-				const shipyardReferences: ReferenceSource[] = myReferences.filter(source => source.type === 'shipyard');
+			getAllReferences(source, 'shipyard').then(shipyardReferences => {
 				if (shipyardReferences.length > 0) {
 					setShipyards(<section>
 						<h2>Shipyards</h2>
@@ -674,15 +626,11 @@ export function ShipyardGenerator(source: ReferenceSource, title?: string) {
 				}
 			})
 		} else if (source.type === 'planet') {
-			getData(source).then(data => {
-				let myShipyards: string | string[] = data.getData()['shipyard'] ?? [];
-				if (typeof myShipyards === 'string') {
-					myShipyards = [myShipyards];
-				}
-				if (myShipyards.length > 0) {
+			getParsedData(source).then(data => data as Planet).then(data => {
+				if (data.shipyard.length > 0) {
 					setShipyards(<section>
 						<h2>Shipyards</h2>
-						<ReferenceLinkList sources={myShipyards.map(shipyard => new ReferenceSource('shipyard', shipyard))} title='This planet has the following shipyards available:'/>
+						<ReferenceLinkList sources={data.shipyard.map(shipyard => new ReferenceSource('shipyard', shipyard))} title='This planet has the following shipyards available:'/>
 					</section>);
 				} else {
 					setShipyards(<section>
@@ -700,16 +648,12 @@ export function VariantListGenerator(source: ReferenceSource, title?: string) {
 	let [variants, setVariants] = useState(undefined as ReactElement | undefined);
 	if (!variants) {
 		if (source.type === 'ship') {
-			getReferences(source.type).then(references => {
-				let myReferences: ReferenceSource[] | undefined = references[source.name as string];
-				if (myReferences) {
-					myReferences = myReferences.filter(reference => reference.type === 'ship');
-					if (myReferences.length > 0) {
-						setVariants(<section>
-							<h2>Variants</h2>
-							<ReferenceLinkList sources={myReferences} title='This ship has the following variants:'/>
-						</section>);
-					}
+			getAllReferences(source, 'ship').then(references => {
+				if (references.length > 0) {
+					setVariants(<section>
+						<h2>Variants</h2>
+						<ReferenceLinkList sources={references} title='This ship has the following variants:'/>
+					</section>);
 				}
 			});
 		}
@@ -723,20 +667,17 @@ export function FleetListGenerator(source: ReferenceSource, title?: string) {
 	if (!fleets) {
 		switch (source.type) {
 			case 'system':
-				getData(source).then(data => {
-					const myFleets: any[] = [].concat(data.getData()['fleet'] ?? []);
+				getParsedData(source).then(data => data as System).then(data => {
 					setFleets(<section>
 						<h2>Fleets</h2>
-						{myFleets.length > 0 ?
-							<ReferenceLinkList sources={myFleets.map(fleet => new ReferenceSource('fleet', fleet['name']))} title='The following fleets appear in this system naturally:'/>
+						{data.fleets.length > 0 ?
+							<ReferenceLinkList sources={data.fleets.map(fleet => new ReferenceSource('fleet', fleet.name))} title='The following fleets appear in this system naturally:'/>
 							: <>No fleets appear in this system naturally.</>}
 					</section>);
 				})
 				break;
 			case 'ship':
-				getReferences(source.type).then(references => {
-					const myReferences = references[source.name as string] ?? [];
-					const myFleets = myReferences.filter(source => source.type === 'fleet');
+				getAllReferences(source, 'fleet').then(myFleets => {
 					setFleets(<section>
 						<h2>Fleets</h2>
 						{myFleets.length > 0 ?
