@@ -16,7 +16,7 @@ import {
 	ReferenceSource,
 	typeToString
 } from "../data/ReferenceSource.ts";
-import React, {ReactElement, useState} from "react";
+import React, {ReactElement, useEffect, useState} from "react";
 import {
 	getChangelog,
 	getCommitURL,
@@ -46,6 +46,7 @@ import {
 	System,
 	Wormhole
 } from "../data/DataScheme.tsx";
+import {MapItemNavigation} from "../components/MapNavigator.tsx";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -213,10 +214,25 @@ export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 }
 
 export function StatsGenerator(source: ReferenceSource, title?: string) {
+	const [mapNavigation, setMapNavigation] = useState(undefined as ReactElement | undefined);
+
+	useEffect(() => {
+		if (source.type === 'planet') {
+			getAllReferences(source, 'system').then(systems => {
+				if (systems.length > 0) {
+					setMapNavigation(<MapItemNavigation source={systems[0]}/>);
+				}
+			})
+		} else if (source.type === 'system') {
+			setMapNavigation(<MapItemNavigation source={source}/>);
+		}
+	}, [source]);
+
 	return <div className='side-stat-box'>
 		<StatBox elements={[source]}/>
 		{(source.type === 'ship' || source.type === 'outfit') ?
-			<ComparisonSingleItemNavigation source={source}/> : <></>}
+			<ComparisonSingleItemNavigation source={source}/> : undefined}
+		{mapNavigation}
 	</div>
 }
 
@@ -293,9 +309,9 @@ export function LinkGenerator(source: ReferenceSource, title?: string) {
 
 			for (const wormhole of wormholes) {
 				for (const link of wormhole.links) {
-					if(link.from === source.name) {
+					if (link.from === source.name) {
 						to.push(link.to);
-					} else if(link.to === source.name) {
+					} else if (link.to === source.name) {
 						from.push(link.from);
 					}
 				}
@@ -387,8 +403,9 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 						if (data.hasLocationFilter) {
 							conditional = <p>This {source.type} may appear on other planets conditionally.</p>
 						}
-						if(data.hasToSell) {
-							conditional = <>{conditional}<p>This {source.type} might not be available at all times.</p></>
+						if (data.hasToSell) {
+							conditional = <>{conditional}
+								<p>This {source.type} might not be available at all times.</p></>
 						}
 						if (planets.length > 0) {
 							setLocation(<section>

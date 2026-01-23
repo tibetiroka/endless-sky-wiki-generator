@@ -8,18 +8,20 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {encodeSourceName, ReferenceSource} from "../data/ReferenceSource.ts";
+import {encodeSourceName, getAllReferences, ReferenceSource} from "../data/ReferenceSource.ts";
 import {getData} from "../data/DataFetcher.ts";
 import {ReactElement, useState} from "react";
 import {ObjectData} from "../data/ObjectData.ts";
 import {AnimationDisplay} from "./AnimationDisplay.tsx"
 import {Tab, Tabs} from "react-bootstrap";
 import {arrayEquals} from "../utils.ts";
+import {SystemMap} from "./SystemMap.tsx";
 
 type StatBoxProps = { elements: ReferenceSource[] }
 
 export function StatBox(props: StatBoxProps) {
 	let [data, setData] = useState(undefined as ObjectData[] | undefined);
+	let [references, setReferences] = useState(undefined as ReferenceSource[][] | undefined);
 
 	if (props.elements.length === 0) {
 		return;
@@ -29,13 +31,18 @@ export function StatBox(props: StatBoxProps) {
 		console.log("Mixed types in stat box");
 		props.elements = props.elements.filter(source => source.type === type);
 	}
-	const supportedTypes = ['ship', 'outfit', 'minable', 'planet'];
+	const supportedTypes = ['ship', 'outfit', 'minable', 'planet', 'system'];
 	if (!supportedTypes.includes(type)) {
 		return undefined;
 	}
 	if (!data) {
 		Promise.all(props.elements.map(source => getData(source))).then(data => setData(data));
 	}
+	if (!references && type === 'planet') {
+		Promise.all(props.elements.map(source => getAllReferences(source, 'system'))).then(data => setReferences(data));
+	}
+
+	const hasImage = (type !== 'system');
 
 	function toKey(object: ObjectData): string {
 		return object.getSource().type + '/' + object.getSource().name;
@@ -134,12 +141,14 @@ export function StatBox(props: StatBoxProps) {
 
 	const rows: (ReactElement | undefined)[] = [];
 	if (data) {
-		rows.push(<tr key='image'>
-			{data.length === 1 ? undefined : <td></td>}
-			{data.map(object => <td key={toKey(object)} colSpan={data?.length === 1 ? 2 : 1}>
-				<CombinedImageDisplay data={object}/>
-			</td>)}
-		</tr>);
+		if (hasImage) {
+			rows.push(<tr key='image'>
+				{data.length === 1 ? undefined : <td></td>}
+				{data.map(object => <td key={toKey(object)} colSpan={data?.length === 1 ? 2 : 1}>
+					<CombinedImageDisplay data={object}/>
+				</td>)}
+			</tr>);
+		}
 		switch (type) {
 			case 'ship': {
 				rows.push(StatRow(false, 'category', 'Class', ['attributes'], undefined, null));
@@ -279,6 +288,27 @@ export function StatBox(props: StatBoxProps) {
 				break;
 			}
 			case 'planet': {
+				if (references) {
+					rows.push(<tr key='map'>
+						{data.length === 1 ? undefined : <td></td>}
+						{data.map((obj, i) => {
+							const systems: ReferenceSource[] = references[i];
+							if (systems.length > 0) {
+								return <td key={i}><SystemMap name={systems[0].name as string} className='stat-box-map'/></td>
+							}
+							return undefined;
+						})}
+					</tr>);
+				}
+				break;
+			}
+			case 'system': {
+				rows.push(<tr key='map'>
+					{data.length === 1 ? undefined : <td></td>}
+					{data.map((obj, i) => {
+						return <td key={i}><SystemMap name={obj.getData().name as string} className='stat-box-map'/></td>
+					})}
+				</tr>);
 				break;
 			}
 		}

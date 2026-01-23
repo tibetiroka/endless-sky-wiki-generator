@@ -118,7 +118,7 @@ div.global-stat-box {
 	}
 }
 
-button.comparison-button {
+button.nav-button {
 	margin: 2px;
 	padding: 4px;
 }
@@ -151,7 +151,7 @@ table td:has(.combined-image-display-tabs) {
 	vertical-align: top;
 }
 
-table.stats img.animation-display {
+table.stats img.animation-display:not(.stat-box-map *) {
 	max-width: 250px;
 	max-height: 250px;
 	margin: auto;
@@ -162,7 +162,7 @@ table.stats img.animation-display {
 	image-rendering: pixelated;
 }
 
-table.stats div.animation-display-wrapper {
+table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 	vertical-align: center;
 	width: 250px;
 	height: 250px;
@@ -225,11 +225,22 @@ table.stats div.animation-display-wrapper {
 /* maps */
 .system-map {
 	background: black;
-	border: solid 2px;
 }
 
 .standalone-map {
-	height: 85vh !important;
+	height: 80vh !important;
+}
+
+.standalone-map:not(.embedded-view-renderer) {
+	border: 1px #4D7A97 solid;
+	border-radius: 5px;
+}
+
+.stat-box-map {
+	height: 250px !important;
+	width: 250px !important;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 /* footer */

@@ -30,7 +30,7 @@ export function ComparisonSingleItemNavigation(props: ComparisonSingleItemNaviga
 		}
 	}
 	return <div>
-		<Button className={isAdded ? 'comparison-button comparison-button-remove btn-danger' : 'comparison-button comparison-button-add btn-success'}
+		<Button className={isAdded ? 'nav-button comparison-button-remove btn-danger' : 'nav-button comparison-button-add btn-success'}
 				onClick={() => {
 					const itemsJson: string | null = localStorage.getItem('compare/' + props.source.type);
 					if (itemsJson) {
@@ -47,7 +47,7 @@ export function ComparisonSingleItemNavigation(props: ComparisonSingleItemNaviga
 			<i className={isAdded ? 'bi bi-dash-square-dotted' : 'bi bi-plus-square-dotted'}></i>
 			{' Compare'}
 		</Button>
-		<Button className='comparison-button comparison-button-view'
+		<Button className='nav-button comparison-button-view'
 				onClick={() => {
 					window.location.href = createPath('compare/' + props.source.type).toString();
 				}}>
@@ -64,7 +64,7 @@ export function ComparisonBulkNavigation(props: ComparisonBulkItemNavigationProp
 
 	return <div className='comparison-bulk-navigation'>
 		{props.isLocal ?
-			<Button className={'comparison-button comparison-button-remove btn-danger'}
+			<Button className={'nav-button comparison-button-remove btn-danger'}
 					onClick={() => {
 						localStorage.setItem('compare/' + props.type, JSON.stringify([]));
 						window.location.href = createPath('').toString();
@@ -72,7 +72,7 @@ export function ComparisonBulkNavigation(props: ComparisonBulkItemNavigationProp
 				<i className='bi bi-dash-square'></i>
 				{' Clear comparison'}
 			</Button> :
-			<Button className={'comparison-button comparison-button-import'}
+			<Button className={'nav-button comparison-button-import'}
 					onClick={() => {
 						const urlParams = new URLSearchParams(window.location.search);
 						const sourcesString: string | null = urlParams.get('sources');
@@ -82,7 +82,7 @@ export function ComparisonBulkNavigation(props: ComparisonBulkItemNavigationProp
 				<i className='bi bi-box-arrow-in-left'></i>
 				{' Import'}
 			</Button>}
-		<Button className={'comparison-button comparison-button-share btn-success'}
+		<Button className={'nav-button comparison-button-share btn-success'}
 				onClick={() => {
 					const path: string = createPath('compare/' + props.type + '?sources=' + encodeURIComponent(JSON.stringify(props.sources))).toString();
 					navigator.clipboard.writeText(path).then(()=>{setShowShare(true)});

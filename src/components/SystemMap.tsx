@@ -14,6 +14,7 @@ import {ReferenceSource} from "../data/ReferenceSource.ts";
 import {System, SystemPlanet} from "../data/DataScheme.tsx";
 import {AnimationDisplay} from "./AnimationDisplay.tsx";
 import {EmbeddedViewRenderer, ViewRendererProps} from "./embed/EmbeddedView.tsx";
+import {createPath} from "../web_utils.ts";
 
 type SystemMapProps = { name: string, time?: number, className?: string };
 
@@ -69,8 +70,13 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 									position: 'absolute',
 									top: topY,
 									left: leftX,
-									//rotate: Math.atan2(obj.position.y, obj.position.x) + Math.PI / 2 + "rad",
 									transform: 'translate(50cqw, 50cqh) translate(-50%, -50%) rotate(' + (Math.atan2(obj.position.y, obj.position.x) + Math.PI / 2) + 'rad)',
+								}}
+								onDoubleClick= {(event: any) => {
+									if(obj.object.isPlanet) {
+										window.location.href = createPath('planet/' + (obj.object.object as SystemPlanet).gameObject.name).toString();
+									}
+									event?.preventDefault();
 								}}>
 									<AnimationDisplay source={'everything/' + obj.object.object.sprite} title={objectName}/>
 								</div>

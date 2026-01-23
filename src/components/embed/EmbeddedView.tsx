@@ -49,8 +49,8 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				top: '0',
 				left: '100%',
 				translate: '-32px 2px'
-			}} onClick={() => {
-				const newScaleSteps = scaleSteps + 1;
+			}} onClick={event => {
+				const newScaleSteps = scaleSteps + (event.ctrlKey ? 5 : 1);
 				setScaleSteps(newScaleSteps);
 				setScale((props.scale ?? 1) * Math.pow(1.3, newScaleSteps));
 			}}>+</Button>
@@ -58,8 +58,8 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				top: '30px',
 				left: '100%',
 				translate: '-32px 2px'
-			}} onClick={() => {
-				const newScaleSteps = scaleSteps - 1;
+			}} onClick={event => {
+				const newScaleSteps = scaleSteps - (event.ctrlKey ? 5 : 1);
 				setScaleSteps(newScaleSteps);
 				setScale((props.scale ?? 1) * Math.pow(1.3, newScaleSteps));
 			}}>‒</Button>

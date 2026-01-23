@@ -21,6 +21,11 @@ export function MapPage() {
 	const urlParams = new URLSearchParams(window.location.search);
 	const system: string | null = urlParams.get('system');
 	if (system) {
-		return <SystemMap name={system} className='standalone-map'/>
+		return <>
+			<section>
+				<h1>Map of {system}</h1>
+				<SystemMap name={system} className='standalone-map'/>
+			</section>
+		</>
 	}
 }
