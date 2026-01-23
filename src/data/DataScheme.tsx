@@ -97,7 +97,7 @@ export class Point {
 	x: number;
 	y: number;
 
-	constructor(data: any) {
+	constructor(data: any = undefined) {
 		if (data === undefined) {
 			this.x = 0;
 			this.y = 0;
@@ -108,6 +108,35 @@ export class Point {
 			this.x = getFloat(data.name);
 			this.y = getFloat(data.values[0]);
 		}
+	}
+
+	min(other: Point) {
+		this.x = Math.min(this.x, other.x);
+		this.y = Math.min(this.y, other.y);
+	}
+
+	max(other: Point) {
+		this.x = Math.max(this.x, other.x);
+		this.y = Math.max(this.y, other.y);
+	}
+
+	rotateAround(rad: number, center: Point) {
+		const dx = this.x - center.x;
+		const dy = this.y - center.y;
+		const cosT = Math.cos(rad);
+		const sinT = Math.sin(rad);
+		this.x = center.x + dx * cosT - dy * sinT;
+		this.y = center.y + dy * cosT + dx * sinT;
+	}
+
+	add(other: Point) {
+		this.x += other.x;
+		this.y += other.y;
+	}
+
+	multiply(scalar: number) {
+		this.x *= scalar;
+		this.y *= scalar;
 	}
 }
 
@@ -335,6 +364,17 @@ export class Swizzle extends GameObject {
 	}
 }
 
+type ObjectsAndPositionsType = {
+	min: Point,
+	max: Point,
+	objects: {
+		object: SystemObject,
+		position: Point,
+		orbitalCenter: Point,
+		orbitalRadius: number
+	}[]
+};
+
 export class System extends GameObject {
 	inaccessible: boolean;
 	hidden: boolean;
@@ -382,10 +422,37 @@ export class System extends GameObject {
 		this.objects = asArray(data.object).map(object => new SystemObject(object));
 	}
 
+	objectsAndPositions(time: number = 0): ObjectsAndPositionsType {
+		const allPos: ObjectsAndPositionsType = {} as any as ObjectsAndPositionsType;
+		allPos.min = new Point();
+		allPos.max = new Point();
+		allPos.objects = [];
+
+		function addObjects(array: SystemObject[], parentPos: Point) {
+			for (const systemObject of array) {
+				const pos = new Point([systemObject.object.distance, 0]);
+				const rotation = systemObject.object.offset + 2 * Math.PI / systemObject.object.period * time;
+				pos.rotateAround(rotation, new Point());
+				pos.add(parentPos);
+				allPos.min.min(pos);
+				allPos.max.max(pos);
+				allPos.objects.push({
+					object: systemObject,
+					position: pos,
+					orbitalCenter: parentPos,
+					orbitalRadius: systemObject.object.distance
+				});
+				addObjects(systemObject.object.objects, pos);
+			}
+		}
+
+		addObjects(this.objects, new Point());
+		return allPos;
+	}
 }
 
 export class SystemObject {
-	object: SystemPlanet | GenericSystemObject;
+	object: GenericSystemObject;
 	isPlanet: boolean;
 
 	constructor(data: any) {
@@ -405,6 +472,7 @@ export class GenericSystemObject {
 	distance: number;
 	// degrees offset within orbit
 	offset: number;
+	period: number;
 	hazard: { name: string, period: number }[];
 	objects: SystemObject[];
 
@@ -412,6 +480,7 @@ export class GenericSystemObject {
 		this.sprite = data.sprite;
 		this.distance = getFloat(data.distance);
 		this.offset = getFloat(data.offset);
+		this.period = getFloat(data.period, 1);
 		this.hazard = asArray(data.hazard).map(hazard => {
 			return {name: hazard.name, period: getInt(hazard.values[0])};
 		});

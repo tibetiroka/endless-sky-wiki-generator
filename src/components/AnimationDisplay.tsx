@@ -10,21 +10,34 @@
 
 import {getDataUrl} from "../web_utils.ts";
 import {getEsUrl} from "../data/DataFetcher.ts"
+import {SyntheticEvent} from "react";
 
-type AnimationDisplayProps = { source: string };
+type OnLoadType = (event: SyntheticEvent<HTMLImageElement, Event>) => void;
+type AnimationDisplayProps = { source: string, onLoad?: OnLoadType, title?: string };
 
 export function AnimationDisplay(props: AnimationDisplayProps) {
 	if (!props.source) {
 		return;
 	}
+	let source = props.source;
+	if (source.startsWith('everything/')) {
+		source = source.substring(0, source.lastIndexOf('/'))
+			+ '/sprite_'
+			+ source.substring(source.lastIndexOf('/') + 1);
+	}
 
 	return <div className='animation-display-wrapper'>
 		<img className='animation-display'
-			 src={getDataUrl('assets/' + props.source).toString()}
+			 src={getDataUrl('assets/' + source).toString()}
+			 title={props.title}
 			 alt=''
 			 loading='lazy'
 			 onError={(error) => {
 				 (error.target as any).src = getEsUrl('images/outfit/unknown.png').toString();
-			 }}/>
+			 }}
+			 onDragStart={event => {
+				 event.preventDefault();
+			 }}
+			 onLoad={props.onLoad}/>
 	</div>
 }

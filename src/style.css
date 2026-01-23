@@ -151,7 +151,7 @@ table td:has(.combined-image-display-tabs) {
 	vertical-align: top;
 }
 
-img.animation-display {
+table.stats img.animation-display {
 	max-width: 250px;
 	max-height: 250px;
 	margin: auto;
@@ -162,7 +162,7 @@ img.animation-display {
 	image-rendering: pixelated;
 }
 
-div.animation-display-wrapper {
+table.stats div.animation-display-wrapper {
 	vertical-align: center;
 	width: 250px;
 	height: 250px;
@@ -209,6 +209,27 @@ div.animation-display-wrapper {
 .diff-container pre {
 	padding-bottom: 0;
 	margin-bottom: 0;
+}
+
+/* semi-embeds */
+
+.embedded-view-renderer .embedded-view-renderer-button.zoom-button {
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	text-align: center;
+	position: absolute;
+	z-index: 1;
+}
+
+/* maps */
+.system-map {
+	background: black;
+	border: solid 2px;
+}
+
+.standalone-map {
+	height: 85vh !important;
 }
 
 /* footer */

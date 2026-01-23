@@ -531,7 +531,6 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 		} else if (source.type === 'fleet') {
 			getParsedData(source).then(data => data as Fleet).then(data => {
 				if (data.variants.length > 0) {
-					console.log(data);
 					setShips(<section>
 						<h2>Ships</h2>
 						This fleet has the following variants:

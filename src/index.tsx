@@ -15,6 +15,7 @@ import {GoHome} from "./components/GoHome.tsx";
 import {CUSTOM_PAGES} from "./components/SearchBox.tsx";
 import {findSource} from "./utils.ts";
 import {Guides} from "./pages/Guides.tsx";
+import {MapPage} from "./pages/MapPage.tsx";
 
 // @ts-ignore
 const domRoot = ReactDOM.createRoot(document.getElementById('root'));
@@ -33,6 +34,7 @@ domRoot.render(
 						<Route path="*" Component={Comparison}/>
 					</Route>
 					<Route path='guides' Component={Guides}/>
+					<Route path="map" Component={MapPage}/>
 					<Route path="*" Component={DynamicRoute}/>
 				</Route>
 			</Routes>
