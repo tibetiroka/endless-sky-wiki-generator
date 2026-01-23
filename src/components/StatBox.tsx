@@ -119,7 +119,7 @@ export function StatBox(props: StatBoxProps) {
 
 		const allNegative = values.every(value => value === defaultValue || value === '' || value[0] === '-')
 			&& !values.every(value => value === defaultValue || value === '');
-		if (allNegative && !name) {
+		if (allNegative && !name && !usedName.includes('Force')) {
 			if (!usedName.includes('Required')) {
 				usedName += ' Required';
 			}
