@@ -41,7 +41,7 @@ function compress_bulk() {
 	dir=$(pwd)
 	cd "$1"
 	shopt -s dotglob
-	tar --create --to-stdout * | compress "$2"
+	tar --create --to-stdout -- * | compress "$2"
 	cd "$dir"
 }
 
@@ -64,6 +64,8 @@ compress_each "$index_dir/entries" "$output/index/entries"
 compress_each "$index_dir/references" "$output/index/references"
 
 compress_each "$generated_dir" "$output/data"
+
+compress_bulk "$generated_dir/system/data" "$output/data/system/all_systems"
 
 if [ -d "$output/assets" ]; then
 	rm -rf "$output/assets"
