@@ -129,9 +129,9 @@ public class Main {
 						.start()
 						.waitFor();
 				if(code != 0) {
-					System.exit(code);
+					throw new IllegalStateException("ffmpeg exited with code " + code);
 				}
-				Files.move(output.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(output.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			} catch(IOException | InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -159,7 +159,9 @@ public class Main {
 					if(entry.getKey().contains(".")) {
 						name = name.substring(0, name.lastIndexOf('.'));
 					}
-					createAnimation(new Animation(entry.getKey()), entry.getValue(), defaultFile, new File(outputDir, "everything/" + name));
+					name = "everything/" + name;
+					name = name.substring(0, name.lastIndexOf('/')) + "/sprite_" + name.substring(name.lastIndexOf('/') + 1);
+					createAnimation(new Animation(entry.getKey()), entry.getValue(), defaultFile, new File(outputDir, name));
 				});
 	}
 
