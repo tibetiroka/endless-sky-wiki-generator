@@ -65,7 +65,11 @@ compress_each "$index_dir/references" "$output/index/references"
 
 compress_each "$generated_dir" "$output/data"
 
-compress_bulk "$generated_dir/system/data" "$output/data/system/all_systems"
+for directory in "$generated_dir/"*; do
+  if [ -d "$directory" ]; then
+    compress_bulk "$directory/data" "$output/data/$(basename "$directory")/all"
+  fi
+done
 
 if [ -d "$output/assets" ]; then
 	rm -rf "$output/assets"
