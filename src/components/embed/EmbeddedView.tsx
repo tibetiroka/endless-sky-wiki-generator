@@ -37,12 +37,6 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 	const [customButtonStates, setCustomButtonStates] = useState(props.initialButtonStates);
 	const [render, setRender] = useState(undefined as undefined | ReactElement);
 
-	function toggleButtonState(index: number) {
-		const states = [...customButtonStates ?? []];
-		states[index] = !states[index];
-		setCustomButtonStates(states);
-	}
-
 	useEffect(() => {
 		const div = <div
 			className={`embedded-view-renderer ${props.className}`}
@@ -91,7 +85,11 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 								left: '100%',
 								translate: '-32px 2px'
 							}}
-							onClick={event => toggleButtonState(index)}>
+							onClick={event => {
+								const states = [...customButtonStates ?? []];
+								states[index] = !states[index];
+								setCustomButtonStates(states);
+							}}>
 						{props.buttonContentGenerators ? props.buttonContentGenerators[index](buttonState) : undefined}
 					</Button>)
 			}
