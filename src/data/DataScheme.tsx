@@ -50,6 +50,12 @@ function getFloat(data: any, def: number = 0): number {
 	} else if (typeof data === 'number') {
 		return data;
 	} else if (typeof data === 'string') {
+		if (data.startsWith('.')) {
+			data = '0' + data;
+		}
+		if (data.endsWith('.')) {
+			data = data + '0';
+		}
 		return Number.parseFloat(data);
 	} else {
 		return def;
@@ -75,9 +81,9 @@ export class GameObject {
 	type: string | undefined;
 
 	constructor(data: any, type: string | undefined) {
-		this.name = data.name;
+		this.name = data?.name ?? (typeof(data) === 'string' ? data : '');
 		const key: keyof typeof data = 'display name';
-		this.displayName = data[key] ?? this.name;
+		this.displayName = data ? data[key] ?? this.name : this.name;
 		this.type = type;
 	}
 
@@ -101,6 +107,9 @@ export class Point {
 		if (data === undefined) {
 			this.x = 0;
 			this.y = 0;
+		} else if(data.constructor === this.constructor) {
+			this.x = data.x;
+			this.y = data.y;
 		} else if (Array.isArray(data)) {
 			this.x = getFloat(data[0]);
 			this.y = getFloat(data[1]);
@@ -132,6 +141,11 @@ export class Point {
 	add(other: Point) {
 		this.x += other.x;
 		this.y += other.y;
+	}
+
+	subtract(other: Point) {
+		this.x -= other.x;
+		this.y -= other.y;
 	}
 
 	multiply(scalar: number) {
@@ -171,23 +185,69 @@ export class Fleet extends GameObject {
 	}
 }
 
+export class Sprite extends GameObject {
+	scale: number;
+
+	constructor(data: any) {
+		super(data, 'sprite');
+		this.scale = getFloat(data.scale, 1);
+	}
+}
+
 export class Galaxy extends GameObject {
 	pos: Point;
+	sprite: Sprite | undefined;
 
 	constructor(data: any) {
 		super(data, 'galaxy');
 		this.pos = new Point(data.pos);
+		this.sprite = data.sprite ? new Sprite(data.sprite) : undefined;
+	}
+}
+
+export class GameColor extends GameObject {
+	rgb: string | undefined;
+	rgba: string | undefined;
+
+	constructor(data: any, topLevel: boolean) {
+		super(data, 'color');
+		if (data !== undefined) {
+			if (typeof (data) === 'string') {
+				this.name = data;
+			} else {
+				if (topLevel) {
+					const colors: number[] = (data.values as string[]).map(value => getFloat(value) * 255);
+					if (colors.length >= 3) {
+						this.rgb = `rgb(${colors[0]}, ${colors[1]}, ${colors[2]})`;
+					}
+					if (colors.length >= 4) {
+						this.rgba = `rgba(${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`;
+					} else {
+						this.rgba = this.rgb;
+					}
+				} else {
+					this.rgb = `rgb(${getFloat(data.name) * 255}, ${getFloat(data.values[0]) * 255}, ${getFloat(data.values[1]) * 255})`;
+					if (data.values.length > 2) {
+						this.rgba = `rgba(${getFloat(data.name) * 255}, ${getFloat(data.values[0]) * 255}, ${getFloat(data.values[1]) * 255}, ${getFloat(data.values[2]) * 255})`;
+					} else {
+						this.rgba = this.rgb;
+					}
+				}
+			}
+		}
 	}
 }
 
 export class Government extends GameObject {
 	bribe: number;
 	swizzle: string | undefined;
+	color: GameColor;
 
 	constructor(data: any) {
 		super(data, 'government');
 		this.bribe = getInt(data.bribe);
 		this.swizzle = data.swizzle;
+		this.color = new GameColor(data.color, false);
 	}
 }
 
@@ -468,7 +528,7 @@ export class SystemObject {
 }
 
 export class GenericSystemObject {
-	sprite: string | undefined;
+	sprite: Sprite | undefined;
 	distance: number;
 	// degrees offset within orbit
 	offset: number;
@@ -477,7 +537,7 @@ export class GenericSystemObject {
 	objects: SystemObject[];
 
 	constructor(data: any) {
-		this.sprite = data.sprite;
+		this.sprite = data.sprite ? new Sprite(data.sprite) : undefined;
 		this.distance = getFloat(data.distance);
 		this.offset = getFloat(data.offset);
 		this.period = getFloat(data.period, 1);
@@ -501,6 +561,7 @@ export class SystemPlanet extends GenericSystemObject {
 export class Wormhole extends GameObject {
 	links: { from: string, to: string }[];
 	mappable: boolean;
+	color: GameColor;
 
 	constructor(data: any) {
 		super(data, 'wormhole');
@@ -508,6 +569,7 @@ export class Wormhole extends GameObject {
 			return {from: arr[0], to: arr[1]};
 		});
 		this.mappable = data.mappable !== undefined;
+		this.color = new GameColor(data.color ? data.color : "map wormhole", false);
 	}
 }
 

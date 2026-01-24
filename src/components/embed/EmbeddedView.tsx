@@ -38,8 +38,10 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 					newOffset.add(offset);
 					setOffset(newOffset);
 					event.preventDefault();
+					event.stopPropagation();
 				}
 			}}
+			onDrag={event => event.preventDefault()}
 			style={{
 				position: 'relative',
 				containerType: 'size'

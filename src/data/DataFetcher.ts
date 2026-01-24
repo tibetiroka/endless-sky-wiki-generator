@@ -5,6 +5,7 @@ import {ChangeData} from "./ChangeData.ts";
 import {findSource} from "../utils.ts";
 import {GameFileList} from "./GameFileList.ts";
 import {GameObject} from "./DataScheme.tsx";
+import untar from "js-untar";
 
 const ES_DATA_ROOT: string = "https://raw.githubusercontent.com/endless-sky/endless-sky/";
 const ES_HISTORY_ROOT: string = "https://github.com/endless-sky/endless-sky/commit/";
@@ -15,6 +16,7 @@ const ES_DEFAULT_INTERACTIVE_REF: string = "master";
 const DATA_CACHE = new Map<ReferenceSource, Promise<ObjectData>>();
 const PARSED_DATA_CACHE = new Map<ReferenceSource, Promise<GameObject>>();
 const CHANGELOG_CACHE = new Map<ReferenceSource, Promise<ChangeData[]>>();
+const ALL_DATA_CACHE = new Map<string, Promise<Map<string, GameObject>>>();
 
 type DisplayNameData = { [U: string]: ReferenceSource[] };
 let DISPLAY_NAME_CACHE: Promise<DisplayNameData> =
@@ -40,6 +42,12 @@ export function getData(source: ReferenceSource): Promise<ObjectData> {
 		});
 	DATA_CACHE.set(source, promise);
 	return promise;
+}
+
+export function getIndex(type: string): Promise<string[]> {
+	return fetchData('index/entries/' + type, 1000 * 60 * 60 * 24)
+		.then(json => JSON.parse(json))
+		.then(data => Object.keys(data))
 }
 
 export function getParsedData(source: ReferenceSource): Promise<GameObject> {
@@ -88,6 +96,27 @@ export function getReferences(category: string): Promise<ReferenceData> {
 
 export function getFileList(): Promise<GameFileList> {
 	return FILE_LIST_CACHE;
+}
+
+export function getAllData(type: string, allowRemoved: boolean = false): Promise<Map<string, GameObject>> {
+	if (ALL_DATA_CACHE.has(type)) {
+		return ALL_DATA_CACHE.get(type) as Promise<Map<string, GameObject>>;
+	}
+	const promise: Promise<Map<string, GameObject>> = fetchData('data/' + type + '/all', 0)
+		.then(data => {
+			const sourceBuffer: ArrayBuffer = new TextEncoder().encode(data).buffer;
+			return untar(sourceBuffer);
+		})
+		.then(files => files.map(file => new ObjectData(new ReferenceSource(type, file.name), file.readAsJSON()))
+			.filter(data => allowRemoved || !data.isRemoved())
+			.map(data => data.parse()))
+		.then(data => {
+			const map = new Map<string, GameObject>();
+			data.forEach(datum => map.set(datum.name, datum));
+			return map;
+		});
+	ALL_DATA_CACHE.set(type, promise);
+	return promise;
 }
 
 export function getEsUrl(path: string, ref: string = ES_DEFAULT_REF): URL {

@@ -96,6 +96,7 @@ div.side-stat-box {
 		width: 100%;
 		display: block;
 	}
+
 	table.stats {
 		width: 100%;
 	}
@@ -106,12 +107,12 @@ div.global-stat-box {
 }
 
 @media all and (min-width: 421px) {
-	main>article>div.container:has(div.global-stat-box) {
+	main > article > div.container:has(div.global-stat-box) {
 		display: block;
 		max-width: 90%;
 	}
 
-	div.global-stat-box>table.stats {
+	div.global-stat-box > table.stats {
 		max-width: 100%;
 		margin-left: auto;
 		margin-right: auto;
@@ -130,7 +131,7 @@ div.comparison-bulk-navigation .toast {
 	padding: 4px;
 }
 
-div.comparison-bulk-navigation .toast>.toast-body {
+div.comparison-bulk-navigation .toast > .toast-body {
 	margin: 0;
 	padding: 0;
 }
@@ -222,13 +223,17 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 	z-index: 1;
 }
 
+.embedded-view-renderer * {
+	user-select: none;
+}
+
 /* maps */
-.system-map {
+.system-map, .galaxy-map {
 	background: black;
 }
 
 .standalone-map {
-	height: 80vh !important;
+	height: 80vh;
 }
 
 .standalone-map:not(.embedded-view-renderer) {
@@ -236,9 +241,19 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 	border-radius: 5px;
 }
 
+.blue-border {
+	border: 1px #4D7A97 solid;
+	border-radius: 5px;
+}
+
+.map-label {
+	color: #4D7A97;
+	fill: #4D7A97;
+}
+
 .stat-box-map {
-	height: 250px !important;
-	width: 250px !important;
+	height: 250px;
+	width: 250px;
 	margin-left: auto;
 	margin-right: auto;
 }

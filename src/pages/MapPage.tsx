@@ -10,21 +10,37 @@
 
 import {useState} from "react";
 import {SystemMap} from "../components/SystemMap.tsx";
+import {GalaxyMap} from "../components/GalaxyMap.tsx";
 
 export function MapPage() {
 	const [titleSet, setTitleSet] = useState(false);
+
 	if (!titleSet) {
 		setTitleSet(true);
-		document.title = 'System view | ' + document.title;
+		// titleSet won't update during this call, so we can query it still
 	}
 
 	const urlParams = new URLSearchParams(window.location.search);
 	const system: string | null = urlParams.get('system');
+	const galaxyCenter: string | null = urlParams.get('galaxy-center');
 	if (system) {
+		if(!titleSet) {
+			document.title = 'System view | ' + document.title;
+		}
 		return <>
 			<section>
 				<h1>Map of {system}</h1>
 				<SystemMap name={system} className='standalone-map'/>
+			</section>
+		</>
+	} else if(galaxyCenter) {
+		if(!titleSet) {
+			document.title = 'Galaxy view | ' + document.title;
+		}
+		return <>
+			<section>
+				<h1>Galaxy map</h1>
+				<GalaxyMap name={galaxyCenter} className='standalone-map'/>
 			</section>
 		</>
 	}

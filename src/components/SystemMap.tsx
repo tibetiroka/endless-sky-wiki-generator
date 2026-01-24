@@ -32,56 +32,54 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 	useEffect(() => {
 		getParsedData(new ReferenceSource('system', props.passthroughProps.name)).then(data => data as System).then(system => {
 			const objectPositions = system.objectsAndPositions(props.passthroughProps.time);
-			setMap(
-				<div>
-					<div className={`system-map ${props.passthroughProps.className}`} style={{
-						position: 'relative',
-						containerType: 'size',
-						overflow: 'hidden',
+			setMap(<div className={`system-map ${props.passthroughProps.className}`} style={{
+					position: 'relative',
+					containerType: 'size',
+					overflow: 'hidden'
+				}}>
+					<div style={{
+						scale: props.scale,
 						height: '100%'
 					}}>
-						<div style={{
-							scale: props.scale,
-							height: '100%'
-						}}>
-							{objectPositions.objects.map((obj, index) => {
-								const topY = obj.orbitalCenter.y - obj.orbitalRadius + props.offset.y;
-								const leftX = obj.orbitalCenter.x - obj.orbitalRadius + props.offset.x;
-								return <div key={index + "-orbit"} className='system-map-element' style={{
-									position: 'absolute',
-									top: topY,
-									left: leftX,
-									transform: 'translate(50cqw, 50cqh)',
-									border: '2px solid grey',
-									borderRadius: obj.orbitalRadius,
-									height: obj.orbitalRadius * 2,
-									width: obj.orbitalRadius * 2
-								}}/>
-							})}
-							{objectPositions.objects.map((obj, index) => {
-								const topY = obj.position.y + props.offset.y;
-								const leftX = obj.position.x + props.offset.x;
-								let objectName = obj.object.object.sprite;
-								if (obj.object.isPlanet) {
-									const planet: SystemPlanet = obj.object.object as SystemPlanet;
-									objectName = planet.gameObject.displayName ?? planet.gameObject.name;
-								}
-								return <div key={index + "-object"} className='system-map-element' style={{
-									position: 'absolute',
-									top: topY,
-									left: leftX,
-									transform: 'translate(50cqw, 50cqh) translate(-50%, -50%) rotate(' + (Math.atan2(obj.position.y, obj.position.x) + Math.PI / 2) + 'rad)',
-								}}
-								onDoubleClick= {(event: any) => {
-									if(obj.object.isPlanet) {
-										window.location.href = createPath('planet/' + (obj.object.object as SystemPlanet).gameObject.name).toString();
-									}
-									event?.preventDefault();
-								}}>
-									<AnimationDisplay source={'everything/' + obj.object.object.sprite} title={objectName}/>
+						{objectPositions.objects.map((obj, index) => {
+							const topY = obj.orbitalCenter.y - obj.orbitalRadius + props.offset.y;
+							const leftX = obj.orbitalCenter.x - obj.orbitalRadius + props.offset.x;
+							return <div key={index + "-orbit"} className='system-map-element' style={{
+								position: 'absolute',
+								top: topY,
+								left: leftX,
+								transform: 'translate(50cqw, 50cqh)',
+								border: '2px solid grey',
+								borderRadius: obj.orbitalRadius,
+								height: obj.orbitalRadius * 2,
+								width: obj.orbitalRadius * 2
+							}}/>
+						})}
+						{objectPositions.objects.map((obj, index) => {
+							const topY = obj.position.y + props.offset.y;
+							const leftX = obj.position.x + props.offset.x;
+							let objectName = obj.object.object.sprite?.name;
+							if (obj.object.isPlanet) {
+								const planet: SystemPlanet = obj.object.object as SystemPlanet;
+								objectName = planet.gameObject.displayName ?? planet.gameObject.name;
+							}
+							return <div key={index + "-object"} className='system-map-element' style={{
+								position: 'absolute',
+								top: topY,
+								left: leftX,
+								transform: 'translate(50cqw, 50cqh) translate(-50%, -50%) rotate(' + (Math.atan2(obj.position.y, obj.position.x) + Math.PI / 2) + 'rad)',
+							}}
+										onDoubleClick={(event: any) => {
+											if (obj.object.isPlanet) {
+												window.location.href = createPath('planet/' + encodeURIComponent((obj.object.object as SystemPlanet).gameObject.name)).toString();
+											}
+											event?.preventDefault();
+										}}>
+								<div style={{scale: obj.object.object.sprite?.scale}}>
+									<AnimationDisplay source={'everything/' + obj.object.object.sprite?.name} title={objectName}/>
 								</div>
-							})}
-						</div>
+							</div>
+						})}
 					</div>
 				</div>
 			);

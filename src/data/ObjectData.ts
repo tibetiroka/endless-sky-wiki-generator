@@ -4,6 +4,7 @@ import {
 	Effect,
 	Fleet,
 	Galaxy,
+	GameColor,
 	GameObject,
 	Government,
 	Hazard,
@@ -75,6 +76,8 @@ export class ObjectData {
 				return new System(this.getData());
 			case 'wormhole':
 				return new Wormhole(this.getData());
+			case 'color':
+				return new GameColor(this.getData(), true);
 			default:
 				return new GameObject(this.getData(), this.id.type);
 		}

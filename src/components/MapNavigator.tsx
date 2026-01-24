@@ -18,15 +18,15 @@ export function MapItemNavigation(props: MapItemNavigationProps) {
 	return <div>
 		{props.source.type === 'system' ?
 			<Button className='nav-button btn-secondary' onClick={() => {
-				window.location.href = createPath('map?system=' + props.source.name as string).toString();
+				window.location.href = createPath('map?system=' + encodeURIComponent(props.source.name as string)).toString();
 			}}>
 				<i className={'bi bi-globe-americas'}></i>
 				{' System map'}
 			</Button> : undefined}
 		{props.source.type === 'system' ?
-			<Button className='nav-button btn-secondary' /*onClick={() => {
-				window.location.href = createPath('map?galaxy-center=' + props.source.name as string).toString();
-			}}*/>
+			<Button className='nav-button btn-secondary' onClick={() => {
+				window.location.href = createPath('map?galaxy-center=' + encodeURIComponent(props.source.name as string)).toString();
+			}}>
 				<i className={'bi bi-map-fill'}></i>
 				{' Galaxy map'}
 			</Button> : undefined}

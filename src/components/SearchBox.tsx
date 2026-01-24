@@ -18,7 +18,7 @@ export const CUSTOM_PAGES: ReferenceSourceIndex = new ReferenceSourceIndex();
 
 function filterIndex(index: readonly IndexEntry[]): IndexEntry[] {
 	function isUnsupported(source: ReferenceSource): boolean {
-		const unsupported = ['license', 'landable', 'star', 'landing message', 'swizzle', 'galaxy', 'hazard', 'effect', 'wormhole'];
+		const unsupported = ['license', 'landable', 'star', 'landing message', 'swizzle', 'galaxy', 'hazard', 'effect', 'wormhole', 'color'];
 		return unsupported.includes(source.type);
 	}
 
