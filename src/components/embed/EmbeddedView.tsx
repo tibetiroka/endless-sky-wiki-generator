@@ -12,21 +12,36 @@ import {ReactElement, useEffect, useState} from "react";
 import {Point} from "../../data/DataScheme.tsx";
 import {Button} from "react-bootstrap";
 
-export type ViewRendererProps = { scale: number, offset: Point, passthroughProps: any };
+export type ViewRendererProps = {
+	readonly scale: number,
+	readonly offset: Point,
+	readonly customToggleStates?: boolean[],
+	readonly passthroughProps: any
+};
 type RenderFunction = (props: ViewRendererProps) => ReactElement | undefined;
 type EmbeddedViewRendererProps = {
-	scale?: number,
-	offset?: Point,
-	className?: string,
-	render: RenderFunction,
-	passthroughProps: any
-}
+	readonly scale?: number,
+	readonly offset?: Point,
+	readonly className?: string,
+	readonly render: RenderFunction,
+	readonly initialButtonStates?: boolean[],
+	readonly buttonTitles?: string[],
+	readonly buttonContentGenerators?: ((state: boolean) => ReactElement | undefined)[],
+	readonly passthroughProps: any
+};
 
 export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactElement | undefined {
 	const [scale, setScale] = useState(props.scale ?? 1);
 	const [scaleSteps, setScaleSteps] = useState(0);
 	const [offset, setOffset] = useState(props.offset ?? new Point());
+	const [customButtonStates, setCustomButtonStates] = useState(props.initialButtonStates);
 	const [render, setRender] = useState(undefined as undefined | ReactElement);
+
+	function toggleButtonState(index: number) {
+		const states = [...customButtonStates ?? []];
+		states[index] = !states[index];
+		setCustomButtonStates(states);
+	}
 
 	useEffect(() => {
 		const div = <div
@@ -46,8 +61,8 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				position: 'relative',
 				containerType: 'size'
 			}}>
-			<props.render scale={scale} offset={offset} passthroughProps={props.passthroughProps}/>
-			<Button variant='secondary' className='embedded-view-renderer-button zoom-button' style={{
+			<props.render scale={scale} offset={offset} customToggleStates={customButtonStates} passthroughProps={props.passthroughProps}/>
+			<Button variant='secondary' className='embedded-view-renderer-button renderer-small-button' title='Zoom in' style={{
 				top: '0',
 				left: '100%',
 				translate: '-32px 2px'
@@ -56,7 +71,7 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				setScaleSteps(newScaleSteps);
 				setScale((props.scale ?? 1) * Math.pow(1.3, newScaleSteps));
 			}}>+</Button>
-			<Button variant='secondary' className='embedded-view-renderer-button zoom-button' style={{
+			<Button variant='secondary' className='embedded-view-renderer-button renderer-small-button' title='Zoom out' style={{
 				top: '30px',
 				left: '100%',
 				translate: '-32px 2px'
@@ -65,9 +80,24 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				setScaleSteps(newScaleSteps);
 				setScale((props.scale ?? 1) * Math.pow(1.3, newScaleSteps));
 			}}>‒</Button>
+			{
+				customButtonStates?.map((buttonState, index) =>
+					<Button key={'custom-button-' + index}
+							variant='secondary'
+							className='embedded-view-renderer-button renderer-small-button'
+							title={props.buttonTitles ? props.buttonTitles[index] : undefined}
+							style={{
+								top: (30 * (index + 2)) + 'px',
+								left: '100%',
+								translate: '-32px 2px'
+							}}
+							onClick={event => toggleButtonState(index)}>
+						{props.buttonContentGenerators ? props.buttonContentGenerators[index](buttonState) : undefined}
+					</Button>)
+			}
 		</div> as ReactElement;
 		setRender(div);
-	}, [props, scale, offset, scaleSteps]);
+	}, [props, scale, offset, scaleSteps, customButtonStates]);
 
 	return render;
 }

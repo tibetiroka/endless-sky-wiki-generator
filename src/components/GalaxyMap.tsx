@@ -20,10 +20,24 @@ import {createPath} from "../web_utils.ts";
 type GalaxyMapProps = { name: string, time?: number, className?: string };
 
 export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
-	return <EmbeddedViewRenderer render={GalaxyMapRenderer} scale={0.3} className={props.className} passthroughProps={{
-		name: props.name,
-		className: props.className
-	}}/>;
+	return <EmbeddedViewRenderer
+		render={GalaxyMapRenderer}
+		scale={0.3}
+		className={props.className}
+		initialButtonStates={[true, true, true, true, true, true]}
+		buttonTitles={['Toggle background', 'Toggle hyperlinks', 'Toggle wormholes', 'Toggle system labels', 'Toggle jump radius', 'Toggle system markers']}
+		buttonContentGenerators={[
+			state => <i className={'bi ' + (state ? 'bi-image-fill' : 'bi-image')}/>,
+			state => <i className={'bi ' + (state ? 'bi-caret-right-square-fill' : 'bi-caret-right-square')}/>,
+			state => <i className={'bi ' + (state ? 'bi-arrow-right-square-fill' : 'bi-arrow-right-square')}/>,
+			state => <i className={'bi ' + (state ? 'bi-chat-left-fill' : 'bi-chat-left')}/>,
+			state => <i className={'bi ' + (state ? 'bi-circle-fill' : 'bi-circle')}/>,
+			state => <i className={'bi ' + (state ? 'bi-crosshair2' : 'bi-crosshair')}/>
+		]}
+		passthroughProps={{
+			name: props.name,
+			className: props.className
+		}}/>;
 }
 
 function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
@@ -70,6 +84,13 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 	}, []);
 	// place systems and create map
 	useEffect(() => {
+		const showBackground = props.customToggleStates?.[0];
+		const showHyperlinks = props.customToggleStates?.[1];
+		const showWormholes = props.customToggleStates?.[2];
+		const showLabels = props.customToggleStates?.[3];
+		const showJumpRadius = props.customToggleStates?.[4];
+		const showSystems = props.customToggleStates?.[5];
+
 		getAllData('system').then(systemMap => {
 			const systems: System[] = systemMap.values().map(s => s as System).toArray();
 			let baseOffset_: Point | undefined;
@@ -106,6 +127,7 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 				overflow: 'hidden',
 			}}>
 				{
+					// labels
 					labels?.map((label, index) => {
 						const pos = new Point();
 						pos.add(baseOffset);
@@ -117,7 +139,8 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 							top: pos.y,
 							left: pos.x,
 							translate: '-50% -50%',
-							transform: `translate(50cqw, 50cqh) scale(${props.scale})`
+							transform: `translate(50cqw, 50cqh) scale(${props.scale})`,
+							display: showBackground ? undefined : 'none'
 						}}>
 							<div style={{scale: label.sprite?.scale}}>
 								<AnimationDisplay source={'everything/' + label.sprite?.name} title={label.displayName ?? label.name ?? label.sprite}/>
@@ -161,7 +184,9 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 													 x2={pos2.x + svgOffset}
 													 y2={pos2.y + svgOffset}
 													 stroke='grey'
-													 strokeWidth={1 / props.scale}/>;
+													 strokeWidth={1 / props.scale}
+													 display={showHyperlinks ? undefined : 'none'}
+										/>;
 									}
 								}
 								return undefined;
@@ -181,7 +206,9 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 												 x1={(systemMap.get(link.from) as System).pos.x - minSystemPos.x + svgOffset}
 												 y1={(systemMap.get(link.from) as System).pos.y - minSystemPos.y + svgOffset}
 												 x2={(systemMap.get(link.to) as System).pos.x - minSystemPos.x + svgOffset}
-												 y2={(systemMap.get(link.to) as System).pos.y - minSystemPos.y + svgOffset}/>;
+												 y2={(systemMap.get(link.to) as System).pos.y - minSystemPos.y + svgOffset}
+												 display={showWormholes ? undefined : 'none'}
+									/>;
 								}
 								return undefined;
 							})
@@ -189,17 +216,19 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 					}
 					{
 						// jump range
-						(()=>{
+						(() => {
 							const storedSystem = systemMap.get(selectedSystem);
-							if(storedSystem) {
+							if (storedSystem) {
 								const system = storedSystem as System;
 								return <circle
 									cx={system.pos.x - minSystemPos.x + svgOffset}
-								cy={system.pos.y - minSystemPos.y + svgOffset}
-								r={system.jumpRange}
-								stroke='grey'
-								strokeWidth={1 / props.scale}
-								fillOpacity='0'/>
+									cy={system.pos.y - minSystemPos.y + svgOffset}
+									r={system.jumpRange}
+									stroke='grey'
+									strokeWidth={1 / props.scale}
+									fillOpacity='0'
+									display={showJumpRadius ? undefined : 'none'}
+								/>
 							}
 							return undefined;
 						})()
@@ -211,7 +240,7 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 										 fontSize={12}
 										 x={system.pos.x - minSystemPos.x + svgOffset + 5}
 										 y={system.pos.y - minSystemPos.y + svgOffset - 5}
-										 display={props.scale >= 0.75 ? undefined : 'none'}>
+										 display={(props.scale >= 0.75 && showLabels) ? undefined : 'none'}>
 								{system.displayName}
 							</text>
 						})
@@ -227,7 +256,9 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 										   strokeWidth={2 / props.scale}
 										   fill={system.name === selectedSystem ? 'white' : undefined}
 										   onClick={event => setSelectedSystem(system.name)}
-										   onDoubleClick={event => window.location.href = createPath('system/' + encodeURIComponent(system.name)).toString()}>
+										   onDoubleClick={event => window.location.href = createPath('system/' + encodeURIComponent(system.name)).toString()}
+										   display={showSystems ? undefined : 'none'}
+							>
 								<title>{system.displayName}</title>
 							</circle>
 						})

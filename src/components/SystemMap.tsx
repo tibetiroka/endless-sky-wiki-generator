@@ -19,12 +19,23 @@ import {createPath} from "../web_utils.ts";
 type SystemMapProps = { name: string, center?: string, time?: number, className?: string };
 
 export function SystemMap(props: SystemMapProps): ReactElement | undefined {
-	return <EmbeddedViewRenderer render={SystemMapRenderer} scale={0.3} className={props.className} passthroughProps={{
-		name: props.name,
-		center: props.center,
-		time: props.time ?? 1100863,
-		className: props.className
-	}}/>;
+	return <EmbeddedViewRenderer
+		render={SystemMapRenderer}
+		scale={0.3}
+		className={props.className}
+		initialButtonStates={[true, true, true]}
+		buttonTitles={['Toggle orbits', 'Toggle asteroid belts', 'Toggle planet labels']}
+		buttonContentGenerators={[
+			state => <i className={'bi ' + (state ? 'bi-crosshair2' : 'bi-crosshair')}/>,
+			state => <i className={'bi ' + (state ? 'bi-circle-fill' : 'bi-circle')}/>,
+			state => <i className={'bi ' + (state ? 'bi-chat-left-fill' : 'bi-chat-left')}/>
+		]}
+		passthroughProps={{
+			name: props.name,
+			center: props.center,
+			time: props.time ?? 1100863,
+			className: props.className
+		}}/>;
 }
 
 function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
@@ -46,6 +57,9 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 		const actualOffset = new Point(initialOffset);
 		actualOffset.multiply(-1);
 		actualOffset.add(props.offset);
+		const showOrbits = (props.customToggleStates as boolean[])[0];
+		const showBelts = (props.customToggleStates as boolean[])[1];
+		const showLabels = (props.customToggleStates as boolean[])[2];
 
 		getParsedData(new ReferenceSource('system', props.passthroughProps.name)).then(data => data as System).then(system => {
 			const objectPositions = system.objectsAndPositions(props.passthroughProps.time);
@@ -73,7 +87,8 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 												top: topY - svgOffset,
 												left: leftX - svgOffset,
 												transformOrigin: 'top left',
-												transform: `translate(50cqw, 50cqh)`
+												transform: `translate(50cqw, 50cqh)`,
+												display: showBelts ? undefined : 'none'
 											}}>
 									<circle cx={belt + svgOffset} cy={belt + svgOffset} r={belt} stroke='saddlebrown' strokeWidth={10 / props.scale} fillOpacity='0'/>
 								</svg>
@@ -92,7 +107,8 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 												top: topY - svgOffset,
 												left: leftX - svgOffset,
 												transformOrigin: 'top left',
-												transform: `translate(50cqw, 50cqh)`
+												transform: `translate(50cqw, 50cqh)`,
+												display: showOrbits ? undefined : 'none'
 											}}>
 									<circle cx={obj.orbitalRadius + svgOffset} cy={obj.orbitalRadius + svgOffset} r={obj.orbitalRadius} stroke='grey' strokeWidth={2 / props.scale} fillOpacity='0'/>
 								</svg>
@@ -135,7 +151,8 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 									 top: objectPositions.min.y - svgOffsetText + actualOffset.y,
 									 left: objectPositions.min.x - svgOffsetText + actualOffset.x,
 									 transformOrigin: 'top left',
-									 transform: 'translate(50cqw, 50cqh)'
+									 transform: 'translate(50cqw, 50cqh)',
+									 display: showLabels ? undefined : 'none'
 								 }}>
 								{
 									objectPositions.objects.map((object, index) => {

@@ -214,7 +214,7 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 
 /* semi-embeds */
 
-.embedded-view-renderer .embedded-view-renderer-button.zoom-button {
+.embedded-view-renderer .embedded-view-renderer-button.renderer-small-button {
 	width: 30px;
 	height: 30px;
 	padding: 0;
