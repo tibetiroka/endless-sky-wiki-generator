@@ -14,9 +14,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public final class Tokenizer {
 	private static final Map<String, Tokenizer> TOKENIZER_CACHE = new ConcurrentHashMap<>();
+	private static final Pattern WHITESPACE_SEQUENCE = Pattern.compile("\\s+");
 	private final @NotNull IndentLevel indent;
 	private final @NotNull List<@NotNull String> tokens = new ArrayList<>();
 
@@ -25,7 +27,7 @@ public final class Tokenizer {
 		String indent = textLine.substring(0, textLine.length() - stripped.length());
 		this.indent = new IndentLevel(indent);
 
-		Iterator<String> wordIt = Arrays.stream(stripped.splitWithDelimiters(" ", 0)).iterator();
+		Iterator<String> wordIt = Arrays.stream(WHITESPACE_SEQUENCE.splitWithDelimiters(stripped, 0)).iterator();
 		// build the tokens
 		wordLoop:
 		while(wordIt.hasNext()) {
