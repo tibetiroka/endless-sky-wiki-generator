@@ -28,6 +28,11 @@ import java.util.stream.Collectors;
 
 public final class DataManager {
 	private final Map<String, DataNode> nodes = new HashMap<>();
+	private static final Set<String> CHILDLESS_KEYS;
+
+	static {
+		CHILDLESS_KEYS = Set.of("color");
+	}
 
 	/**
 	 * Stores the named nodes from the list, and can later compute diffs and other stuff from them.
@@ -39,7 +44,7 @@ public final class DataManager {
 		nodes.stream()
 		     .filter(n -> Objects.equals(keyFilter, n.getKey()))
 		     .filter(n -> n.getName() != null)
-		     .filter(n -> !n.getChildren().isEmpty())
+		     .filter(n -> !n.getChildren().isEmpty() || CHILDLESS_KEYS.contains(keyFilter))
 		     .forEach(n -> this.nodes.put(n.getName(), n));
 	}
 

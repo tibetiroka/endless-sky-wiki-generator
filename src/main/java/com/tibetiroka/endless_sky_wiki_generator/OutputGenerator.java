@@ -17,9 +17,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public class OutputGenerator {
 	private final Map<String, OutputBuffer> outputs;
@@ -44,6 +46,7 @@ public class OutputGenerator {
 		outputs.put("landing message", new OutputBuffer());
 		outputs.put("effect", new OutputBuffer());
 		outputs.put("swizzle", new OutputBuffer());
+		outputs.put("color", new OutputBuffer());
 	}
 
 	public OutputGenerator(@NotNull List<@NotNull DataNode> oldNodes) {

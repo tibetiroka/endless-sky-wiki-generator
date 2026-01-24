@@ -125,7 +125,11 @@ public final class DataNode implements Comparable<DataNode> {
 	public @Nullable String getName() {
 		if(key == null || values.isEmpty())
 			return null;
-		return values.getLast();
+
+		if("ship".equals(key)) {
+			return  values.getLast();
+		}
+		return values.getFirst();
 	}
 
 	public @NotNull List<@NotNull String> getValues() {
