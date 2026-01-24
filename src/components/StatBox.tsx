@@ -294,7 +294,7 @@ export function StatBox(props: StatBoxProps) {
 						{data.map((obj, i) => {
 							const systems: ReferenceSource[] = references[i];
 							if (systems.length > 0) {
-								return <td key={i}><SystemMap name={systems[0].name as string} className='stat-box-map'/></td>
+								return <td key={i}><SystemMap name={systems[0].name as string} center={obj.getData().name} className='stat-box-map'/></td>
 							}
 							return undefined;
 						})}

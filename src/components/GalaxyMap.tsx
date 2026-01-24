@@ -97,7 +97,7 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 				minSystemPos.min(system.pos);
 				maxSystemPos.max(system.pos);
 			}
-			const svgOffset = Math.max(10, 10 / props.scale);
+			const svgOffset = Math.max(100, 100 / props.scale);
 			console.log(props.scale);
 
 			setMap(<div className={`galaxy-map ${props.passthroughProps.className}`} style={{
@@ -186,6 +186,23 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 								return undefined;
 							})
 						)
+					}
+					{
+						// jump range
+						(()=>{
+							const storedSystem = systemMap.get(selectedSystem);
+							if(storedSystem) {
+								const system = storedSystem as System;
+								return <circle
+									cx={system.pos.x - minSystemPos.x + svgOffset}
+								cy={system.pos.y - minSystemPos.y + svgOffset}
+								r={system.jumpRange}
+								stroke='grey'
+								strokeWidth={1 / props.scale}
+								fillOpacity='0'/>
+							}
+							return undefined;
+						})()
 					}
 					{
 						// system names

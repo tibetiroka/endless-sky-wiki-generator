@@ -22,6 +22,7 @@ export function MapPage() {
 
 	const urlParams = new URLSearchParams(window.location.search);
 	const system: string | null = urlParams.get('system');
+	const centerPlanet: string | null = urlParams.get('system-center');
 	const galaxyCenter: string | null = urlParams.get('galaxy-center');
 	if (system) {
 		if(!titleSet) {
@@ -30,7 +31,7 @@ export function MapPage() {
 		return <>
 			<section>
 				<h1>Map of {system}</h1>
-				<SystemMap name={system} className='standalone-map'/>
+				<SystemMap name={system} center={centerPlanet ?? undefined} className='standalone-map'/>
 			</section>
 		</>
 	} else if(galaxyCenter) {

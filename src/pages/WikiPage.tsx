@@ -220,7 +220,7 @@ export function StatsGenerator(source: ReferenceSource, title?: string) {
 		if (source.type === 'planet') {
 			getAllReferences(source, 'system').then(systems => {
 				if (systems.length > 0) {
-					setMapNavigation(<MapItemNavigation source={systems[0]}/>);
+					setMapNavigation(<MapItemNavigation source={systems[0]} target={source}/>);
 				}
 			})
 		} else if (source.type === 'system') {

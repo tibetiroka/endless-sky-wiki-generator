@@ -232,6 +232,10 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 	background: black;
 }
 
+.system-map svg {
+	pointer-events: none;
+}
+
 .standalone-map {
 	height: 80vh;
 }
@@ -249,6 +253,7 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 .map-label {
 	color: #4D7A97;
 	fill: #4D7A97;
+	pointer-events: none;
 }
 
 .stat-box-map {

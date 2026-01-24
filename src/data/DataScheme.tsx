@@ -443,6 +443,8 @@ export class System extends GameObject {
 	government: string | undefined;
 	attributes: string[];
 	music: string | undefined;
+	belts: number[];
+	jumpRange: number;
 	links: string[];
 	asteroids: NameAndCount[];
 	minables: NameAndCount[];
@@ -463,6 +465,7 @@ export class System extends GameObject {
 		this.attributes = asArray(getTopLevelTokens(data.attributes));
 		this.music = data.music;
 		this.links = asArray(data.link);
+		this.belts = asArray(data.belt).map(belt => getFloat(getName(belt)));
 		this.asteroids = asArray(data.asteroids).map(asteroid => {
 			return {name: asteroid.name, count: getInt(asteroid.values[1])};
 		});
@@ -480,6 +483,9 @@ export class System extends GameObject {
 			return {name: hazard.name, period: getInt(hazard.values[1])}
 		})
 		this.objects = asArray(data.object).map(object => new SystemObject(object));
+
+		const jumpRangeKey: keyof typeof data = 'jump range';
+		this.jumpRange = getFloat(data[jumpRangeKey], 100); // 100 is the default JD range
 	}
 
 	objectsAndPositions(time: number = 0): ObjectsAndPositionsType {

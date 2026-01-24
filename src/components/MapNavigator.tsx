@@ -12,13 +12,13 @@ import {ReferenceSource} from "../data/ReferenceSource.ts";
 import {Button} from "react-bootstrap";
 import {createPath} from "../web_utils.ts";
 
-type MapItemNavigationProps = { source: ReferenceSource }
+type MapItemNavigationProps = { source: ReferenceSource, target?: ReferenceSource }
 
 export function MapItemNavigation(props: MapItemNavigationProps) {
 	return <div>
 		{props.source.type === 'system' ?
 			<Button className='nav-button btn-secondary' onClick={() => {
-				window.location.href = createPath('map?system=' + encodeURIComponent(props.source.name as string)).toString();
+				window.location.href = createPath('map?system=' + encodeURIComponent(props.source.name as string) + (props.target && props.target.type === 'planet' ? '&system-center=' + encodeURIComponent(props.target.name as string) : '')).toString();
 			}}>
 				<i className={'bi bi-globe-americas'}></i>
 				{' System map'}
