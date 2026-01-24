@@ -8,7 +8,8 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ReferenceSource} from "./data/ReferenceSource.ts";
+import {ReferenceSource} from './data/ReferenceSource.ts';
+const LZString = require('lz-string');
 
 export const HOME_PATH: string = 'endless-sky-wiki-generator';
 export const HOST_ORIGIN: string = 'tibetiroka.github.io';
@@ -70,15 +71,18 @@ export function getDataUrl(path: string): URL {
 
 export function fetchData(path: string, cacheLifeMs: number = 1000 * 60 * 60 * 5): Promise<string> {
 	const url: URL = getDataUrl(path);
-	const cacheDate = localStorage.getItem(path + "|date");
+	const cacheDate = localStorage.getItem(path + '|date');
 	// check if there is a cached value
 	if (cacheLifeMs > 0 && cacheDate !== null) {
 		const date = Number.parseInt(cacheDate);
 		const age = Date.now() - date;
 		if (age < cacheLifeMs) {
 			const cacheData = localStorage.getItem(path);
+			const compressedCacheData = localStorage.getItem(path + '|compressed');
 			if (cacheData !== null && cacheData !== '') {
 				return Promise.resolve(cacheData);
+			} else if(compressedCacheData !== null && compressedCacheData !== '') {
+				return Promise.resolve(LZString.decompress(compressedCacheData));
 			} else {
 				return Promise.reject('Cached data is marked as invalid');
 			}
@@ -89,14 +93,15 @@ export function fetchData(path: string, cacheLifeMs: number = 1000 * 60 * 60 * 5
 		return new Response(decompressed).text();
 	}).then(text => {
 		if (cacheLifeMs > 0) {
-			localStorage.setItem(path + "|date", Date.now().toString());
-			localStorage.setItem(path + "|life", cacheLifeMs.toString());
-			localStorage.setItem(path, text);
+			localStorage.setItem(path + '|date', Date.now().toString());
+			localStorage.setItem(path + '|life', cacheLifeMs.toString());
+			localStorage.setItem(path + '|compressed', LZString.compress(text));
 		}
 		return Promise.resolve(text);
 	}).catch(reason => {
-		localStorage.setItem(path + "|date", Date.now().toString());
-		localStorage.setItem(path + "|life", (1000 * 60 * 5).toString());
+		localStorage.setItem(path + '|date', Date.now().toString());
+		localStorage.setItem(path + '|life', (1000 * 60 * 5).toString());
+		localStorage.setItem(path + '|compressed', '');
 		localStorage.setItem(path, '');
 		return reason;
 	});
@@ -106,11 +111,12 @@ function clearCache() {
 	for (const key in localStorage) {
 		if (key.endsWith('|date')) {
 			const rawKey = key.substring(0, key.length - '|date'.length);
-			const date = Number.parseInt(localStorage.getItem(key) ?? '0');
+			const date = Number.parseInt(localStorage.getItem(rawKey + '|date') ?? '0');
 			const life = Number.parseInt(localStorage.getItem(rawKey + '|life') ?? '0');
 			if (Date.now() - date >= life) {
 				localStorage.removeItem(rawKey);
-				localStorage.removeItem(key);
+				localStorage.removeItem(rawKey + '|compressed')
+				localStorage.removeItem(rawKey + '|date');
 				localStorage.removeItem(rawKey + '|life');
 			}
 		}

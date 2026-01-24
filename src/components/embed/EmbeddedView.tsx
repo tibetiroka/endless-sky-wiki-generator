@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ReactElement, useEffect, useState} from "react";
+import {ReactElement, useEffect, useRef, useState} from "react";
 import {Point} from "../../data/DataScheme.tsx";
 import {Button} from "react-bootstrap";
 
@@ -34,6 +34,8 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 	const [scale, setScale] = useState(props.scale ?? 1);
 	const [scaleSteps, setScaleSteps] = useState(0);
 	const [offset, setOffset] = useState(props.offset ?? new Point());
+	const latestOffset = useRef(new Point(offset));
+	const latestOffsetTicking = useRef(false);
 	const [customButtonStates, setCustomButtonStates] = useState(props.initialButtonStates);
 	const [render, setRender] = useState(undefined as undefined | ReactElement);
 
@@ -44,8 +46,15 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				if (event.buttons & 1) {
 					const newOffset: Point = new Point([event.movementX, event.movementY]);
 					newOffset.multiply(1 / scale);
-					newOffset.add(offset);
-					setOffset(newOffset);
+					newOffset.add(latestOffset.current);
+					latestOffset.current = newOffset;
+					if(!latestOffsetTicking.current) {
+						latestOffsetTicking.current = true;
+						requestAnimationFrame(()=> {
+							setOffset(latestOffset.current);
+							latestOffsetTicking.current = false;
+						});
+					}
 					event.preventDefault();
 					event.stopPropagation();
 				}
