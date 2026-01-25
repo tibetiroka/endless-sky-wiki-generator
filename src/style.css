@@ -213,7 +213,9 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 }
 
 /* semi-embeds */
-
+.embedded-view-renderer {
+	touch-action: none;
+}
 .embedded-view-renderer .embedded-view-renderer-button.renderer-small-button {
 	width: 30px;
 	height: 30px;
@@ -248,6 +250,46 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 .blue-border {
 	border: 1px #4D7A97 solid;
 	border-radius: 5px;
+}
+
+.galaxy-map g.galaxy-map-global-group * {
+	vector-effect: non-scaling-stroke;
+}
+
+.galaxy-map .galaxy-map-hyperlink {
+	stroke: grey;
+	stroke-width: 1px;
+}
+
+.galaxy-map .galaxy-map-wormhole {
+	stroke-dasharray: 6;
+	stroke-width: 1;
+}
+
+.galaxy-map .galaxy-map-jump-range {
+	stroke: grey;
+	stroke-width: 1;
+	fill-opacity: 0;
+}
+
+.galaxy-map .galaxy-map-system .galaxy-map-system-ring {
+	stroke-linecap: round;
+	stroke-width: 14;
+	fill-opacity: 0;
+}
+
+.galaxy-map .galaxy-map-system .galaxy-map-system-fill {
+	stroke-linecap: round;
+	stroke-width: 10;
+	fill-opacity: 0;
+}
+
+.galaxy-map .galaxy-map-system .galaxy-map-system-fill-selected {
+	stroke: white;
+}
+
+.galaxy-map .galaxy-map-system .galaxy-map-system-fill-unselected {
+	stroke: black;
 }
 
 .map-label {

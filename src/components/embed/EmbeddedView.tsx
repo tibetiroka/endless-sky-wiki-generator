@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {ReactElement, useEffect, useRef, useState} from "react";
+import {ReactElement, useCallback, useEffect, useRef, useState} from "react";
 import {Point} from "../../data/DataScheme.tsx";
 import {Button} from "react-bootstrap";
 
@@ -21,6 +21,8 @@ export type ViewRendererProps = {
 type RenderFunction = (props: ViewRendererProps) => ReactElement | undefined;
 type EmbeddedViewRendererProps = {
 	readonly scale?: number,
+	readonly minScale?: number,
+	readonly maxScale?: number,
 	readonly offset?: Point,
 	readonly className?: string,
 	readonly render: RenderFunction,
@@ -36,28 +38,63 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 	const [offset, setOffset] = useState(props.offset ?? new Point());
 	const latestOffset = useRef(new Point(offset));
 	const latestOffsetTicking = useRef(false);
+	const previousTouchPos = useRef(new Point());
 	const [customButtonStates, setCustomButtonStates] = useState(props.initialButtonStates);
 	const [render, setRender] = useState(undefined as undefined | ReactElement);
+
+	const addScale = useCallback((steps: number) => {
+		const scaleFactor = 1.3;
+		const scaleBase = props.scale ?? 1;
+		let newScaleSteps = scaleSteps + steps;
+		let scale = Math.pow(scaleFactor, newScaleSteps);
+		if (props.minScale && scale < props.minScale) {
+			newScaleSteps = Math.log(props.minScale) / Math.log(scaleFactor);
+			scale = Math.pow(scaleFactor, newScaleSteps);
+		} else if (props.maxScale && scale > props.maxScale) {
+			newScaleSteps = Math.log(props.maxScale) / Math.log(scaleFactor);
+			scale = Math.pow(scaleFactor, newScaleSteps);
+		}
+		setScaleSteps(newScaleSteps);
+		setScale(scale * scaleBase);
+	}, [props, scaleSteps]);
+
+	const addOffset = useCallback((delta: Point) => {
+		delta.add(latestOffset.current);
+		latestOffset.current = delta;
+		if (!latestOffsetTicking.current) {
+			latestOffsetTicking.current = true;
+			requestAnimationFrame(() => {
+				setOffset(latestOffset.current);
+				latestOffsetTicking.current = false;
+			});
+		}
+	}, [latestOffset, latestOffsetTicking]);
 
 	useEffect(() => {
 		const div = <div
 			className={`embedded-view-renderer ${props.className}`}
 			onMouseMove={event => {
 				if (event.buttons & 1) {
-					const newOffset: Point = new Point([event.movementX, event.movementY]);
-					newOffset.multiply(1 / scale);
-					newOffset.add(latestOffset.current);
-					latestOffset.current = newOffset;
-					if(!latestOffsetTicking.current) {
-						latestOffsetTicking.current = true;
-						requestAnimationFrame(()=> {
-							setOffset(latestOffset.current);
-							latestOffsetTicking.current = false;
-						});
-					}
+					const delta: Point = new Point([event.movementX, event.movementY]);
+					delta.multiply(1 / scale);
+					addOffset(delta);
 					event.preventDefault();
 					event.stopPropagation();
 				}
+			}}
+			onTouchStart={event => {
+				previousTouchPos.current = new Point([event.touches[0].pageX, event.touches[0].pageY]);
+			}}
+			onTouchMove={event => {
+				const currPos = new Point([event.touches[0].pageX, event.touches[0].pageY]);
+				const prevPos = previousTouchPos.current ? previousTouchPos.current : currPos;
+				const delta = new Point(currPos);
+				delta.subtract(prevPos);
+				delta.multiply(1 / scale);
+				addOffset(delta);
+				previousTouchPos.current = currPos;
+				event.preventDefault();
+				event.stopPropagation();
 			}}
 			onDrag={event => event.preventDefault()}
 			style={{
@@ -69,20 +106,12 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 				top: '0',
 				left: '100%',
 				translate: '-32px 2px'
-			}} onClick={event => {
-				const newScaleSteps = scaleSteps + (event.ctrlKey ? 5 : 1);
-				setScaleSteps(newScaleSteps);
-				setScale((props.scale ?? 1) * Math.pow(1.3, newScaleSteps));
-			}}>+</Button>
+			}} onClick={event => addScale(event.ctrlKey ? 5 : 1)}>+</Button>
 			<Button variant='secondary' className='embedded-view-renderer-button renderer-small-button' title='Zoom out' style={{
 				top: '30px',
 				left: '100%',
 				translate: '-32px 2px'
-			}} onClick={event => {
-				const newScaleSteps = scaleSteps - (event.ctrlKey ? 5 : 1);
-				setScaleSteps(newScaleSteps);
-				setScale((props.scale ?? 1) * Math.pow(1.3, newScaleSteps));
-			}}>‒</Button>
+			}} onClick={event => addScale(event.ctrlKey ? -5 : -1)}>‒</Button>
 			{
 				customButtonStates?.map((buttonState, index) =>
 					<Button key={'custom-button-' + index}
@@ -94,7 +123,7 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 								left: '100%',
 								translate: '-32px 2px'
 							}}
-							onClick={event => {
+							onClick={_ => {
 								const states = [...customButtonStates ?? []];
 								states[index] = !states[index];
 								setCustomButtonStates(states);
@@ -104,7 +133,7 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 			}
 		</div> as ReactElement;
 		setRender(div);
-	}, [props, scale, offset, scaleSteps, customButtonStates]);
+	}, [props, scale, offset, customButtonStates, addOffset, addScale]);
 
 	return render;
 }
