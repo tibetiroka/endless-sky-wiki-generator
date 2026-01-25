@@ -23,6 +23,7 @@ export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 	return <EmbeddedViewRenderer
 		render={GalaxyMapRenderer}
 		scale={0.3}
+		maxScale={15}
 		className={props.className}
 		initialButtonStates={[true, true, true, true, true, true]}
 		buttonTitles={['Toggle background', 'Toggle hyperlinks', 'Toggle wormholes', 'Toggle system labels', 'Toggle jump radius', 'Toggle system markers']}
@@ -41,21 +42,31 @@ export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 }
 
 function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
+	// user state
 	const [initialOffset, setInitialOffset] = useState(undefined as Point | undefined);
 	const [selectedSystem, setSelectedSystem] = useState(props.passthroughProps.name as string);
-	const [labels, setLabels] = useState(undefined as Galaxy[] | undefined);
+	// static data
+	const [galaxies, setGalaxies] = useState(undefined as Galaxy[] | undefined);
 	const [governmentColors, setGovernmentColors] = useState(new Map<string, GameColor>());
 	const [colors, setColors] = useState(new Map<string, GameObject>());
 	const [wormholes, setWormholes] = useState(undefined as undefined | Wormhole[]);
 	const [systemMap, setSystemMap] = useState(undefined as Map<string, GameObject> | undefined);
 	const [systems, setSystems] = useState(undefined as System[] | undefined);
+	// renders
+	const [minSystemPos, setMinSystemPos] = useState(new Point() as Point);
+	const [maxSystemPos, setMaxSystemPos] = useState(new Point() as Point);
+	const [mapGalaxies, setMapGalaxies] = useState(undefined as ReactElement[] | undefined);
+	const [mapHyperlanes, setMapHyperlanes] = useState(undefined as ReactElement | undefined);
+	const [mapWormholes, setMapWormholes] = useState(undefined as ReactElement | undefined);
+	const [mapLabels, setMapLabels] = useState(undefined as ReactElement | undefined);
+	const [mapSystems, setMapSystems] = useState(undefined as ReactElement | undefined);
 	const [map, setMap] = useState(undefined as ReactElement | undefined);
 
 	// parse all galaxies and government colors
 	useEffect(() => {
 		getIndex('galaxy').then(galaxies => {
 			Promise.all(galaxies.map(galaxy => getParsedData(new ReferenceSource('galaxy', galaxy))))
-				.then(parsedGalaxies => setLabels(parsedGalaxies.map(g => g as Galaxy).filter(galaxy => galaxy.sprite)));
+				.then(parsedGalaxies => setGalaxies(parsedGalaxies.map(g => g as Galaxy).filter(galaxy => galaxy.sprite)));
 		});
 	}, []);
 	useEffect(() => {
@@ -90,11 +101,147 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 			setSystemMap(systemMap);
 			const systems: System[] = systemMap.values().map(s => s as System).toArray();
 			setSystems(systems);
+			const minSystemPos: Point = systems.length === 0 ? new Point() : new Point(systems[0].pos);
+			const maxSystemPos: Point = systems.length === 0 ? new Point() : new Point(systems[0].pos);
+			for (const system of systems) {
+				minSystemPos.min(system.pos);
+				maxSystemPos.max(system.pos);
+			}
+			setMinSystemPos(minSystemPos);
+			setMaxSystemPos(maxSystemPos);
 		})
 	}, []);
+
+	// Create background labels
+	useEffect(() => {
+		setMapGalaxies(galaxies?.map((label, index) => <div key={'label-' + index} style={{
+			position: 'absolute',
+			top: label.pos.y,
+			left: label.pos.x,
+			transform: `translate(50cqw, 50cqh) translate(-50%, -50%)`
+		}}>
+			<div style={{scale: label.sprite?.scale}}>
+				<AnimationDisplay source={'everything/' + label.sprite?.name} title={label.displayName ?? label.sprite}/>
+			</div>
+		</div>));
+	}, [galaxies]);
+
+	// Hyperlanes
+	useEffect(() => {
+		if (!systems || !systemMap) {
+			return;
+		}
+		setMapHyperlanes(
+			<g className='galaxy-map-hyperlinks'>
+				{
+					systems.flatMap((system, index) => {
+						const pos1 = new Point(system.pos);
+						return system.links.map((link, linkIndex) => {
+							if (link.localeCompare(system.name) > 0) {
+								const otherSystem = systemMap.get(link) as System | undefined;
+								if (otherSystem) {
+									const pos2 = new Point(otherSystem.pos);
+									return <line key={'hyperlink-' + index + '-' + linkIndex}
+												 x1={pos1.x}
+												 y1={pos1.y}
+												 x2={pos2.x}
+												 y2={pos2.y}
+												 className='galaxy-map-hyperlink'
+									/>;
+								}
+							}
+							return undefined;
+						});
+					})
+				}
+			</g>
+		);
+	}, [systems, systemMap]);
+
+	// Wormholes
+	useEffect(() => {
+		if (!systems || !systemMap || !colors || !governmentColors || !wormholes) {
+			return;
+		}
+		setMapWormholes(
+			<g className='galaxy-map-wormholes'>
+				{
+					wormholes.flatMap((wormhole, index) =>
+						wormhole.links.map((link, linkIndex) => {
+							if (systemMap.has(link.from) && systemMap.has(link.to)) {
+								return <line key={'wormhole-' + index + '-' + linkIndex}
+											 className='galaxy-map-wormhole'
+											 markerEnd='url(#arrowhead)'
+											 stroke={wormhole.color.rgba ?? colors ? (colors.get(wormhole.color.name) as GameColor | undefined)?.rgba : undefined}
+											 x1={(systemMap.get(link.from) as System).pos.x}
+											 y1={(systemMap.get(link.from) as System).pos.y}
+											 x2={(systemMap.get(link.to) as System).pos.x}
+											 y2={(systemMap.get(link.to) as System).pos.y}
+								/>;
+							}
+							return undefined;
+						})
+					)
+				}
+			</g>);
+	}, [systems, systemMap, colors, governmentColors, wormholes]);
+
+	// System names
+	useEffect(() => {
+		if (!systems) {
+			return;
+		}
+		setMapLabels(<g className='galaxy-map-system-labels'>
+			{
+				systems.map((system, index) =>
+					<text key={'system-label-' + index} className='map-label'
+						  fontSize={12}
+						  x={system.pos.x + 5}
+						  y={system.pos.y - 5}>
+						{system.displayName}
+					</text>
+				)
+			}
+		</g>)
+	}, [systems]);
+
+	// Systems
+	useEffect(() => {
+		if (!systems) {
+			return;
+		}
+		setMapSystems(<g className='galaxy-map-systems'>
+			{
+				systems.map((system, index) =>
+					<g key={'system-' + index}
+					   className='galaxy-map-system'
+					>
+						<line className='galaxy-map-system-ring'
+							  x1={system.pos.x}
+							  y1={system.pos.y}
+							  x2={system.pos.x}
+							  y2={system.pos.y}
+							  stroke={system.government ? governmentColors.get(system.government)?.rgba ?? 'grey' : 'grey'}
+							  onClick={_ => setSelectedSystem(system.name)}
+							  onDoubleClick={_ => window.location.href = createPath('system/' + encodeURIComponent(system.name)).toString()}
+						/>
+						<line className={'galaxy-map-system-fill galaxy-map-system-fill-' + (selectedSystem === system.name ? 'selected' : 'unselected')}
+							  x1={system.pos.x}
+							  y1={system.pos.y}
+							  x2={system.pos.x}
+							  y2={system.pos.y}
+							  onClick={_ => setSelectedSystem(system.name)}
+							  onDoubleClick={_ => window.location.href = createPath('system/' + encodeURIComponent(system.name)).toString()}
+						/>
+					</g>
+				)
+			}
+		</g>)
+	}, [systems, selectedSystem, governmentColors]);
+
 	// place systems and create map
 	useEffect(() => {
-		if(!systemMap || !systems) {
+		if (!systemMap || !systems) {
 			return;
 		}
 
@@ -124,13 +271,7 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 		}
 		const baseOffset = baseOffset_ as Point;
 
-		const minSystemPos: Point = systems.length === 0 ? new Point() : new Point(systems[0].pos);
-		const maxSystemPos: Point = systems.length === 0 ? new Point() : new Point(systems[0].pos);
-		for (const system of systems) {
-			minSystemPos.min(system.pos);
-			maxSystemPos.max(system.pos);
-		}
-		const svgOffset = Math.max(100, 100 / props.scale);
+		const svgOffset = 100 * (props.scale >= 1 ? props.scale : 1 / props.scale);
 
 		setMap(<div className={`galaxy-map ${props.passthroughProps.className}`} style={{
 			position: 'relative',
@@ -138,142 +279,64 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 			overflow: 'hidden',
 		}}>
 			{
-				// labels
-				labels?.map((label, index) => {
-					const pos = new Point();
-					pos.add(baseOffset);
-					pos.add(label.pos);
-					pos.add(props.offset);
-					pos.multiply(props.scale);
-					return <div key={'label-' + index} style={{
-						position: 'absolute',
-						top: pos.y,
-						left: pos.x,
-						translate: '-50% -50%',
-						transform: `translate(50cqw, 50cqh) scale(${props.scale})`,
-						display: showBackground ? undefined : 'none'
-					}}>
-						<div style={{scale: label.sprite?.scale}}>
-							<AnimationDisplay source={'everything/' + label.sprite?.name} title={label.displayName ?? label.name ?? label.sprite}/>
-						</div>
-					</div>;
-				})
+				showBackground ? <div className='galaxy-map-galaxies' style={{
+					width: '100%',
+					height: '100%',
+					transform: `scale(${props.scale}) translate(${baseOffset.x + props.offset.x}px, ${baseOffset.y + props.offset.y}px)`
+				}}>{mapGalaxies}</div> : undefined
 			}
-			<svg width={maxSystemPos.x - minSystemPos.x + svgOffset * 2}
-				 height={maxSystemPos.y - minSystemPos.y + svgOffset * 2}
+			<svg width={(maxSystemPos.x - minSystemPos.x + svgOffset * 2) * props.scale}
+				 height={(maxSystemPos.y - minSystemPos.y + svgOffset * 2) * props.scale}
 				 style={{
 					 position: 'absolute',
 					 top: (minSystemPos.y - svgOffset + baseOffset.y + props.offset.y) * props.scale,
 					 left: (minSystemPos.x - svgOffset + baseOffset.x + props.offset.x) * props.scale,
-					 transformOrigin: 'top left',
-					 transform: `translate(50cqw, 50cqh) scale(${props.scale})`
+					 transform: `translate(50cqw, 50cqh)`
 				 }}>
-				<defs>
-					<marker id='arrowhead'
-							orient='auto'
-							markerWidth={16}
-							markerHeight={10}
-							refX={23} refY={5}>
-						<path d={`M0,0 V 10 L 16 5 Z`}
-							  fill='context-stroke'/>
-					</marker>
-				</defs>
-				{
-					// hyperlinks
-					systems.flatMap((system, index) => {
-						const pos1 = new Point(system.pos);
-						pos1.subtract(minSystemPos);
-						return system.links.map((link, linkIndex) => {
-							if (link.localeCompare(system.name) > 0) {
-								const otherSystem = systemMap.get(link) as System | undefined;
-								if (otherSystem) {
-									const pos2 = new Point(otherSystem.pos);
-									pos2.subtract(minSystemPos);
-									return <line key={'hyperlink-' + index + '-' + linkIndex}
-												 x1={pos1.x + svgOffset}
-												 y1={pos1.y + svgOffset}
-												 x2={pos2.x + svgOffset}
-												 y2={pos2.y + svgOffset}
-												 stroke='grey'
-												 strokeWidth={1 / props.scale}
-												 display={showHyperlinks ? undefined : 'none'}
-									/>;
-								}
+				<g className='galaxy-map-global-group'
+				   style={{
+					   transform: `scale(${props.scale}) translate(${svgOffset}px, ${svgOffset}px) translate(${-minSystemPos.x}px, ${-minSystemPos.y}px)`
+				   }}>
+					<defs>
+						<marker id='arrowhead'
+								orient='auto'
+								markerWidth={16}
+								markerHeight={10}
+								refX={20} refY={5}>
+							<path d={`M0,0 V 10 L 16 5 Z`}
+								  fill='context-stroke'/>
+						</marker>
+					</defs>
+					{
+						showHyperlinks ? mapHyperlanes : undefined
+					}
+					{
+						showWormholes ? mapWormholes : undefined
+					}
+					{
+						// jump range
+						(() => {
+							const storedSystem = systemMap.get(selectedSystem);
+							if (storedSystem) {
+								const system = storedSystem as System;
+								return <circle
+									className='galaxy-map-jump-range'
+									cx={system.pos.x}
+									cy={system.pos.y}
+									r={system.jumpRange}
+									display={showJumpRadius ? undefined : 'none'}
+								/>
 							}
 							return undefined;
-						});
-					})
-				}
-				{
-					// wormholes
-					wormholes?.flatMap((wormhole, index) =>
-						wormhole.links.map((link, linkIndex) => {
-							if (systemMap.has(link.from) && systemMap.has(link.to)) {
-								return <line key={'wormhole-' + index + '-' + linkIndex}
-											 markerEnd='url(#arrowhead)'
-											 stroke={wormhole.color.rgba ?? colors ? (colors.get(wormhole.color.name) as GameColor | undefined)?.rgba : undefined}
-											 strokeDasharray={6 / props.scale}
-											 strokeWidth={1 / props.scale}
-											 x1={(systemMap.get(link.from) as System).pos.x - minSystemPos.x + svgOffset}
-											 y1={(systemMap.get(link.from) as System).pos.y - minSystemPos.y + svgOffset}
-											 x2={(systemMap.get(link.to) as System).pos.x - minSystemPos.x + svgOffset}
-											 y2={(systemMap.get(link.to) as System).pos.y - minSystemPos.y + svgOffset}
-											 display={showWormholes ? undefined : 'none'}
-								/>;
-							}
-							return undefined;
-						})
-					)
-				}
-				{
-					// jump range
-					(() => {
-						const storedSystem = systemMap.get(selectedSystem);
-						if (storedSystem) {
-							const system = storedSystem as System;
-							return <circle
-								cx={system.pos.x - minSystemPos.x + svgOffset}
-								cy={system.pos.y - minSystemPos.y + svgOffset}
-								r={system.jumpRange}
-								stroke='grey'
-								strokeWidth={1 / props.scale}
-								fillOpacity='0'
-								display={showJumpRadius ? undefined : 'none'}
-							/>
-						}
-						return undefined;
-					})()
-				}
-				{
-					// system names
-					systems.map((system, index) => {
-						return <text key={'system-label-' + index} className='map-label'
-									 fontSize={12}
-									 x={system.pos.x - minSystemPos.x + svgOffset + 5}
-									 y={system.pos.y - minSystemPos.y + svgOffset - 5}
-									 display={(props.scale >= 0.75 && showLabels) ? undefined : 'none'}>
-							{system.displayName}
-						</text>
-					})
-				}
-				{
-					// systems
-					systems.map((system, index) => {
-						return <circle key={'system-' + index}
-									   cx={system.pos.x - minSystemPos.x + svgOffset}
-									   cy={system.pos.y - minSystemPos.y + svgOffset}
-									   r={5 / props.scale}
-									   stroke={system.government ? governmentColors.get(system.government)?.rgba ?? 'grey' : 'grey'}
-									   strokeWidth={2 / props.scale}
-									   fill={system.name === selectedSystem ? 'white' : undefined}
-									   onClick={event => setSelectedSystem(system.name)}
-									   onDoubleClick={event => window.location.href = createPath('system/' + encodeURIComponent(system.name)).toString()}
-									   display={showSystems ? undefined : 'none'}
-						>
-							<title>{system.displayName}</title>
-						</circle>
-					})
-				}
+						})()
+					}
+					{
+						showLabels && props.scale >= 0.75 ? mapLabels : undefined
+					}
+					{
+						showSystems ? mapSystems : undefined
+					}
+				</g>
 			</svg>
 			{selectedSystem ? <div className='blue-border' style={{
 				position: 'absolute',
@@ -282,7 +345,7 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 				transform: 'translate(0, 100cqh) translate(0, -100%)'
 			}}><SystemMap name={selectedSystem} className={'stat-box-map'}/></div> : undefined}
 		</div>);
-	}, [props, initialOffset, selectedSystem, labels, governmentColors, wormholes, colors, systemMap, systems]);
+	}, [props, initialOffset, selectedSystem, systemMap, systems, minSystemPos, maxSystemPos, mapGalaxies, mapHyperlanes, mapWormholes, mapLabels, mapSystems]);
 
 	return map;
 }
