@@ -445,6 +445,7 @@ export class System extends GameObject {
 	music: string | undefined;
 	belts: number[];
 	jumpRange: number;
+	haze: string;
 	links: string[];
 	asteroids: NameAndCount[];
 	minables: NameAndCount[];
@@ -466,6 +467,7 @@ export class System extends GameObject {
 		this.music = data.music;
 		this.links = asArray(data.link);
 		this.belts = asArray(data.belt).map(belt => getFloat(getName(belt)));
+		this.haze = data.haze ?? '_menu/haze';
 		this.asteroids = asArray(data.asteroids).map(asteroid => {
 			return {name: asteroid.name, count: getInt(asteroid.values[1])};
 		});

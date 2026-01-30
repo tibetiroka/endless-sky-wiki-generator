@@ -238,6 +238,11 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 	pointer-events: none;
 }
 
+.system-map {
+	background-repeat: repeat;
+	background-position: top left;
+}
+
 .standalone-map {
 	height: 80vh;
 }

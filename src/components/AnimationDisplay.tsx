@@ -10,28 +10,37 @@
 
 import {getDataUrl} from "../web_utils.ts";
 import {getEsUrl} from "../data/DataFetcher.ts"
-import {SyntheticEvent} from "react";
+import {CSSProperties, SyntheticEvent} from "react";
 
 type OnLoadType = (event: SyntheticEvent<HTMLImageElement, Event>) => void;
-type AnimationDisplayProps = { source: string, onLoad?: OnLoadType, title?: string };
+type AnimationDisplayProps = {
+	source: string,
+	onLoad?: OnLoadType,
+	title?: string,
+	style?: CSSProperties
+};
 
-export function AnimationDisplay(props: AnimationDisplayProps) {
-	if (!props.source) {
-		return;
-	}
-	let source = props.source;
+export function getImageUrl(source: string): URL {
 	if (source.startsWith('everything/')) {
 		source = source.substring(0, source.lastIndexOf('/'))
 			+ '/sprite_'
 			+ source.substring(source.lastIndexOf('/') + 1);
 	}
+	return getDataUrl('assets/' + source);
+}
+
+export function AnimationDisplay(props: AnimationDisplayProps) {
+	if (!props.source) {
+		return;
+	}
 
 	return <div className='animation-display-wrapper'>
 		<img className='animation-display'
-			 src={getDataUrl('assets/' + source).toString()}
+			 src={getImageUrl(props.source).toString()}
 			 title={props.title}
 			 alt=''
 			 loading='lazy'
+			 style={props.style}
 			 onError={(error) => {
 				 (error.target as any).src = getEsUrl('images/outfit/unknown.png').toString();
 			 }}

@@ -12,7 +12,7 @@ import {ReactElement, useEffect, useState} from "react";
 import {getParsedData} from "../data/DataFetcher.ts";
 import {ReferenceSource} from "../data/ReferenceSource.ts";
 import {Point, System, SystemPlanet} from "../data/DataScheme.tsx";
-import {AnimationDisplay} from "./AnimationDisplay.tsx";
+import {AnimationDisplay, getImageUrl} from "./AnimationDisplay.tsx";
 import {EmbeddedViewRenderer, ViewRendererProps} from "./embed/EmbeddedView.tsx";
 import {createPath} from "../web_utils.ts";
 
@@ -75,7 +75,8 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 		setMap(<div className={`system-map ${props.passthroughProps.className}`} style={{
 				position: 'relative',
 				containerType: 'size',
-				overflow: 'hidden'
+				overflow: 'hidden',
+				backgroundImage: `url(${getImageUrl('everything/' + system.haze).toString()})`
 			}}>
 				<div style={{
 					scale: props.scale,
