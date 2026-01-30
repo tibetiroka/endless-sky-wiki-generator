@@ -1,17 +1,17 @@
 {
   "files": {
-    "main.css": "/endless-sky-wiki-generator/static/css/main.de4d48a2.css",
-    "main.js": "/endless-sky-wiki-generator/static/js/main.7b2355d2.js",
+    "main.css": "/endless-sky-wiki-generator/static/css/main.b2c96ca7.css",
+    "main.js": "/endless-sky-wiki-generator/static/js/main.1b941bf9.js",
     "static/media/logo512.png": "/endless-sky-wiki-generator/static/media/logo512.cf9b63d6302dd2952398.png",
     "static/media/bootstrap-icons.woff?": "/endless-sky-wiki-generator/static/media/bootstrap-icons.1295669cd4e305c97f2c.woff",
     "static/media/bootstrap-icons.woff2?": "/endless-sky-wiki-generator/static/media/bootstrap-icons.92ea18a81d737146ff04.woff2",
     "static/media/banner.png": "/endless-sky-wiki-generator/static/media/banner.76e25b64a5eb918c6b09.png",
     "index.html": "/endless-sky-wiki-generator/index.html",
-    "main.de4d48a2.css.map": "/endless-sky-wiki-generator/static/css/main.de4d48a2.css.map",
-    "main.7b2355d2.js.map": "/endless-sky-wiki-generator/static/js/main.7b2355d2.js.map"
+    "main.b2c96ca7.css.map": "/endless-sky-wiki-generator/static/css/main.b2c96ca7.css.map",
+    "main.1b941bf9.js.map": "/endless-sky-wiki-generator/static/js/main.1b941bf9.js.map"
   },
   "entrypoints": [
-    "static/css/main.de4d48a2.css",
-    "static/js/main.7b2355d2.js"
+    "static/css/main.b2c96ca7.css",
+    "static/js/main.1b941bf9.js"
   ]
 }
