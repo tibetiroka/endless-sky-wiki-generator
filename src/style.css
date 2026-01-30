@@ -240,7 +240,11 @@ table.stats div.animation-display-wrapper:not(.stat-box-map *) {
 
 .system-map {
 	background-repeat: repeat;
-	background-position: top left;
+	background-position: center;
+}
+
+.standalone-map.system-map {
+	background-size: 100%;
 }
 
 .standalone-map {
