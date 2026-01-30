@@ -11,6 +11,7 @@
 import {useState} from "react";
 import {SystemMap} from "../components/SystemMap.tsx";
 import {GalaxyMap} from "../components/GalaxyMap.tsx";
+import {GoHome} from "../components/GoHome.tsx";
 
 export function MapPage() {
 	const [titleSet, setTitleSet] = useState(false);
@@ -21,28 +22,37 @@ export function MapPage() {
 	}
 
 	const urlParams = new URLSearchParams(window.location.search);
-	const system: string | null = urlParams.get('system');
-	const centerPlanet: string | null = urlParams.get('system-center');
-	const galaxyCenter: string | null = urlParams.get('galaxy-center');
-	if (system) {
-		if(!titleSet) {
-			document.title = 'System view | ' + document.title;
-		}
-		return <>
-			<section>
-				<h1>Map of {system}</h1>
-				<SystemMap name={system} center={centerPlanet ?? undefined} className='standalone-map'/>
-			</section>
-		</>
-	} else if(galaxyCenter) {
-		if(!titleSet) {
-			document.title = 'Galaxy view | ' + document.title;
-		}
-		return <>
-			<section>
-				<h1>Galaxy map</h1>
-				<GalaxyMap name={galaxyCenter} className='standalone-map'/>
-			</section>
-		</>
+	const type: string | null = urlParams.get('type');
+	const focus: string | null = urlParams.get('focus');
+	switch (type) {
+		case 'system':
+			const system: string | null = urlParams.get('system');
+			if (system === null) {
+				return <GoHome/>;
+			}
+			if (!titleSet) {
+				document.title = 'System view | ' + document.title;
+			}
+			return <>
+				<section>
+					<h1>Map of {system}</h1>
+					<SystemMap name={system} center={focus ?? undefined} className='standalone-map'/>
+				</section>
+			</>
+		case 'galaxy':
+			if (!focus) {
+				return <GoHome/>
+			}
+			if (!titleSet) {
+				document.title = 'Galaxy view | ' + document.title;
+			}
+			return <>
+				<section>
+					<h1>Galaxy map</h1>
+					<GalaxyMap name={focus} className='standalone-map'/>
+				</section>
+			</>
+		default:
+			return <GoHome/>;
 	}
 }
