@@ -55,6 +55,7 @@ export class PageGenerator {
 	stats?: SectionGenerator = StatsGenerator;
 	preamble?: SectionGenerator = PreambleGenerator;
 	description?: SectionGenerator = DescriptionGenerator;
+	spaceport?: SectionGenerator = SpaceportGenerator;
 	landingLocations?: SectionGenerator = LandingLocationGenerator;
 	links?: SectionGenerator = LinkGenerator;
 	location?: SectionGenerator = LocationGenerator;
@@ -70,6 +71,7 @@ export class PageGenerator {
 		const gen = new PageGenerator();
 		gen.stats = undefined;
 		gen.description = undefined;
+		gen.spaceport = undefined;
 		gen.landingLocations = undefined;
 		gen.links = undefined;
 		gen.location = undefined;
@@ -109,6 +111,7 @@ function WikiPage(props: SourceProps) {
 		{generator.stats ? generator.stats.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.preamble ? generator.preamble.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.description ? generator.description.call(generator, props.source, props.title) ?? <></> : <></>}
+		{generator.spaceport ? generator.spaceport.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.landingLocations ? generator.landingLocations.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.links ? generator.links.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.location ? generator.location.call(generator, props.source, props.title) ?? <></> : <></>}
@@ -211,6 +214,22 @@ export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 		});
 	}
 	return description;
+}
+
+export function SpaceportGenerator(source: ReferenceSource, title?: string) {
+	let [spaceport, setSpaceport] = useState(undefined as ReactElement | undefined);
+	if (!spaceport && source.type === 'planet') {
+		getParsedData(source).then(data => {
+			const planet: Planet = data as Planet;
+			setSpaceport(<section>
+				<h2>Spaceport</h2>
+				{
+					planet.spaceport.toElement()
+				}
+			</section>);
+		});
+	}
+	return spaceport;
 }
 
 export function StatsGenerator(source: ReferenceSource, title?: string) {
