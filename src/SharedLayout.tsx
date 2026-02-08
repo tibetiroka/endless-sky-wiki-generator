@@ -41,7 +41,7 @@ function SharedLayout() {
 					<Navbar.Toggle aria-controls="basic-navbar-nav"/>
 					<Navbar.Collapse id="basic-navbar-nav">
 						<SearchBox/>
-						<Form className='dark-mode-switcher'>
+						<Form className='dark-mode-switcher d-none d-md-flex'>
 							<Form.Check
 								type="switch"
 								id="darkModeToggle"
