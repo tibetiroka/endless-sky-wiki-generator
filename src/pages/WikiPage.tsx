@@ -136,7 +136,7 @@ function WikiPage(props: SourceProps) {
 
 export function TitleGenerator(source: ReferenceSource, title?: string) {
 	let [heading, setHeading] = useState(undefined as ReactElement | undefined);
-	if (!heading) {
+	useEffect(() => {
 		if (title) {
 			document.getElementById('meta-og-title')?.setAttribute('content', title);
 			setHeading(<>
@@ -155,28 +155,35 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 				setHeading(GoHome());
 			});
 		}
-	}
+	}, [source, title]);
 
 	let [removedNotice, setRemovedNotice] = useState(undefined as ReactElement | undefined);
-	if (!removedNotice && !title) {
-		getData(source).then(data => {
-			if (data.isRemoved()) {
-				const commit: CommitData = data.getRemovedCommit() as CommitData;
-				removedNotice = <Alert variant="danger">
-					This {source.type} was <a href={getCommitURL(commit.hash).toString()}>removed</a> in {commit.tag}. It is no longer part of the game.
-				</Alert>
-				setRemovedNotice(removedNotice);
-			}
-		});
-	}
+	useEffect(() => {
+		if(!title) {
+			getData(source).then(data => {
+				if (data.isRemoved()) {
+					const commit: CommitData = data.getRemovedCommit() as CommitData;
+					setRemovedNotice(<Alert variant="danger">
+						This {source.type} was <a href={getCommitURL(commit.hash).toString()}>removed</a> in {commit.tag}. It is no longer part of the game.
+					</Alert>);
+				}
+			});
+		} else {
+			setRemovedNotice(undefined);
+		}
+	}, [source, title]);
 
-	let stubNotice: ReactElement | undefined = undefined;
-	const stubTypes: string[] = ["system", "government", "minable"];
-	if (!title && (stubTypes.includes(source.type) || isMultiPart(source))) {
-		stubNotice = <Alert variant="warning">
-			This article is automatically generated and is a stub. You can read about how to expand it <a href='/public'>here: todo</a>.
-		</Alert>
-	}
+	const [stubNotice, setStubNotice] = useState(undefined as ReactElement | undefined);
+	useEffect(() => {
+		const stubTypes: string[] = ["system", "government", "minable"];
+		if(!title && (stubTypes.includes(source.type) || isMultiPart(source))) {
+			setStubNotice(<Alert variant="warning">
+				This article is automatically generated and is a stub. You can read about how to expand it <a href='/public'>here: todo</a>.
+			</Alert>);
+		} else {
+			setStubNotice(undefined);
+		}
+	}, [source, title]);
 
 	return <section>
 		{heading}
@@ -187,31 +194,31 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 
 export function PreambleGenerator(source: ReferenceSource, title?: string) {
 	let [preamble, setPreamble] = useState(undefined as ReactElement | undefined);
-	if (!preamble) {
+	useEffect(() => {
 		getChangelog(source).then(changelog => {
 			if (changelog.length) {
 				getDisplayName(source).then(displayName => {
 					const typeText = isLicense(source) ? 'license' : typeToString(source);
-					preamble = <section>
+					setPreamble(<section>
 						<span>
 							{displayName + " is " + (typeText.match('^[aeiouAEIOU].*') ? 'an' : 'a') + ' ' + typeText + " "}
 							<a href={getCommitURL(changelog[0].commit.hash).toString()}>added</a>
 							{" to the game in " + changelog[0].commit.tag + "."}
 						</span>
-					</section>;
-					setPreamble(preamble);
+					</section>);
 				});
 			} else {
 				console.log('No changelog found');
+				setPreamble(undefined);
 			}
 		});
-	}
+	}, [source]);
 	return preamble;
 }
 
 export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 	let [description, setDescription] = useState(undefined as ReactElement | undefined);
-	if (!description) {
+	useEffect(() => {
 		getParsedData(source).then(data => {
 			const desc = (data as any).description;
 			if (desc) {
@@ -225,23 +232,27 @@ export function DescriptionGenerator(source: ReferenceSource, title?: string) {
 				setDescription(<></>);
 			}
 		});
-	}
+	}, [source]);
 	return description;
 }
 
 export function SpaceportGenerator(source: ReferenceSource, title?: string) {
 	let [spaceport, setSpaceport] = useState(undefined as ReactElement | undefined);
-	if (!spaceport && source.type === 'planet') {
-		getParsedData(source).then(data => {
-			const planet: Planet = data as Planet;
-			setSpaceport(<section>
-				<h2>Spaceport</h2>
-				{
-					planet.spaceport.toElement()
-				}
-			</section>);
-		});
-	}
+	useEffect(() => {
+		if(source.type === 'planet') {
+			getParsedData(source).then(data => {
+				const planet: Planet = data as Planet;
+				setSpaceport(<section>
+					<h2>Spaceport</h2>
+					{
+						planet.spaceport.toElement()
+					}
+				</section>);
+			});
+		} else {
+			setSpaceport(undefined);
+		}
+	}, [source]);
 	return spaceport;
 }
 
@@ -257,6 +268,8 @@ export function StatsGenerator(source: ReferenceSource, title?: string) {
 			})
 		} else if (source.type === 'system') {
 			setMapNavigation(<MapItemNavigation source={source}/>);
+		} else {
+			setMapNavigation(undefined);
 		}
 	}, [source]);
 
@@ -271,46 +284,50 @@ export function StatsGenerator(source: ReferenceSource, title?: string) {
 export function LandingLocationGenerator(source: ReferenceSource, title?: string) {
 	let [planets, setPlanets] = useState(undefined as ReactElement | undefined);
 
-	function toDataArray(data: any | any[] | undefined): any[] {
-		if (!data) {
-			return [];
-		} else if (Array.isArray(data)) {
-			return data;
+	useEffect(() => {
+		function toDataArray(data: any | any[] | undefined): any[] {
+			if (!data) {
+				return [];
+			} else if (Array.isArray(data)) {
+				return data;
+			}
+			return [data];
 		}
-		return [data];
-	}
 
-	function flatMapObjects(data: any | any[] | undefined): string[] {
-		return toDataArray(data).flatMap(value => {
-			const elements: string[] = [];
-			if (value['object']) {
-				elements.push(...flatMapObjects(value['object']));
-			}
-			if (value['name']) {
-				elements.push(value['name']);
-			}
-			return elements;
-		});
-	}
+		function flatMapObjects(data: any | any[] | undefined): string[] {
+			return toDataArray(data).flatMap(value => {
+				const elements: string[] = [];
+				if (value['object']) {
+					elements.push(...flatMapObjects(value['object']));
+				}
+				if (value['name']) {
+					elements.push(value['name']);
+				}
+				return elements;
+			});
+		}
 
-	if (!planets && source.type === 'system') {
-		getData(source).then(data => {
-			const objectData: any | any[] | undefined = data.getData()['object'];
-			const landableArray: string[] = flatMapObjects(objectData);
-			if (landableArray.length > 0) {
-				setPlanets(<section>
-					<h2>Landing locations</h2>
-					<ReferenceLinkList sources={landableArray.map(name => new ReferenceSource('planet', name))}
-									   title={data.displayName + ' has ' + landableArray.length + ' landing ' + (landableArray.length === 1 ? 'location' : 'locations') + ':'}/>
-				</section>)
-			} else {
-				setPlanets(<section>
-					<h2>Landing locations</h2>
-					{data.displayName} doesn't have any landing locations.
-				</section>);
-			}
-		});
-	}
+		if(source.type === 'system') {
+			getData(source).then(data => {
+				const objectData: any | any[] | undefined = data.getData()['object'];
+				const landableArray: string[] = flatMapObjects(objectData);
+				if (landableArray.length > 0) {
+					setPlanets(<section>
+						<h2>Landing locations</h2>
+						<ReferenceLinkList sources={landableArray.map(name => new ReferenceSource('planet', name))}
+										   title={data.displayName + ' has ' + landableArray.length + ' landing ' + (landableArray.length === 1 ? 'location' : 'locations') + ':'}/>
+					</section>)
+				} else {
+					setPlanets(<section>
+						<h2>Landing locations</h2>
+						{data.displayName} doesn't have any landing locations.
+					</section>);
+				}
+			});
+		} else {
+			setPlanets(undefined);
+		}
+	}, [source]);
 
 	return planets;
 }
@@ -318,59 +335,69 @@ export function LandingLocationGenerator(source: ReferenceSource, title?: string
 export function LinkGenerator(source: ReferenceSource, title?: string) {
 	let [links, setLinks] = useState(undefined as ReactElement | undefined);
 	let [wormholes, setWormholes] = useState(undefined as ReactElement | undefined);
-	if (!links && source.type === 'system') {
-		getParsedData(source).then(data => data as System).then(data => {
-			if (data.links.length > 0) {
-				setLinks(<section>
-					<h2>Links</h2>
-					<ReferenceLinkList sources={data.links.map(link => new ReferenceSource('system', link))}
-									   title={<>{data.displayName} links to {data.links.length === 1 ? '1 system' : data.links.length + ' systems'}:</>}/>
-				</section>);
-			} else {
-				setLinks(<section>
-					<h2>Links</h2>
-					{data.displayName} isn't linked to any systems.
-				</section>);
-			}
-		});
-	}
-	if (!wormholes && source.type === 'system') {
-		getAllReferenceObjects(source, 'wormhole').then(wormholes => wormholes as Wormhole[]).then(wormholes => {
-			const from: string[] = [];
-			const to: string[] = [];
 
-			for (const wormhole of wormholes) {
-				for (const link of wormhole.links) {
-					if (link.from === source.name) {
-						to.push(link.to);
-					} else if (link.to === source.name) {
-						from.push(link.from);
+	useEffect(() => {
+		if(source.type === 'system') {
+			getParsedData(source).then(data => data as System).then(data => {
+				if (data.links.length > 0) {
+					setLinks(<section>
+						<h2>Links</h2>
+						<ReferenceLinkList sources={data.links.map(link => new ReferenceSource('system', link))}
+										   title={<>{data.displayName} links to {data.links.length === 1 ? '1 system' : data.links.length + ' systems'}:</>}/>
+					</section>);
+				} else {
+					setLinks(<section>
+						<h2>Links</h2>
+						{data.displayName} isn't linked to any systems.
+					</section>);
+				}
+			});
+		} else {
+			setLinks(undefined);
+		}
+	}, [source]);
+
+	useEffect(() => {
+		if(source.type === 'system') {
+			getAllReferenceObjects(source, 'wormhole').then(wormholes => wormholes as Wormhole[]).then(wormholes => {
+				const from: string[] = [];
+				const to: string[] = [];
+
+				for (const wormhole of wormholes) {
+					for (const link of wormhole.links) {
+						if (link.from === source.name) {
+							to.push(link.to);
+						} else if (link.to === source.name) {
+							from.push(link.from);
+						}
 					}
 				}
-			}
-			setWormholes(<>
-				{
-					from.length === 0 ? undefined :
-						<>Incoming wormholes from:
-							<ReferenceLinkList sources={from.map(s => new ReferenceSource('system', s))}/>
-						</>
-				}
-				{
-					from.length === 0 ? undefined :
-						<>Outgoing wormholes to:
-							<ReferenceLinkList sources={to.map(s => new ReferenceSource('system', s))}/>
-						</>
-				}
-			</>);
-		});
-	}
+				setWormholes(<>
+					{
+						from.length === 0 ? undefined :
+							<>Incoming wormholes from:
+								<ReferenceLinkList sources={from.map(s => new ReferenceSource('system', s))}/>
+							</>
+					}
+					{
+						from.length === 0 ? undefined :
+							<>Outgoing wormholes to:
+								<ReferenceLinkList sources={to.map(s => new ReferenceSource('system', s))}/>
+							</>
+					}
+				</>);
+			});
+		} else {
+			setWormholes(undefined);
+		}
+	}, [source]);
 
 	return <>{links}{wormholes}</>;
 }
 
 export function LocationGenerator(source: ReferenceSource, title?: string) {
 	let [location, setLocation] = useState(undefined as ReactElement | undefined);
-	if (!location) {
+	useEffect(() => {
 		switch (source.type) {
 			case 'fleet':
 				getAllReferences(source, 'system').then(references => {
@@ -469,14 +496,17 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 					});
 				});
 				break;
+			default:
+				setLocation(undefined);
+				break;
 		}
-	}
+	}, [source]);
 	return location;
 }
 
 export function LicenseGenerator(source: ReferenceSource, title?: string) {
 	let [licenses, setLicenses] = useState(undefined as string[] | undefined);
-	if (licenses === undefined) {
+	useEffect(() => {
 		switch (source.type) {
 			case 'ship':
 				getParsedData(source).then(ship => setLicenses((ship as Ship).licenses()));
@@ -484,9 +514,11 @@ export function LicenseGenerator(source: ReferenceSource, title?: string) {
 			case 'outfit':
 				getParsedData(source).then(outfit => setLicenses((outfit as Outfit).licenses));
 				break;
+			default:
+				setLicenses(undefined);
 		}
-	}
-	console.log(licenses);
+	}, [source]);
+
 	if(licenses && licenses.length > 0) {
 		return <section>
 			<h2>Licenses</h2>
@@ -498,7 +530,7 @@ export function LicenseGenerator(source: ReferenceSource, title?: string) {
 
 export function OutfitGenerator(source: ReferenceSource, title?: string) {
 	let [outfits, setOutfits] = useState(undefined as ReactElement | undefined | null);
-	if (outfits === undefined) {
+	useEffect(() => {
 		if (source.type === 'ship') {
 			getParsedData(source).then(data => data as Ship).then(data => {
 				if (data.outfits.length > 0) {
@@ -572,14 +604,16 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 					</section>);
 				}
 			});
+		} else {
+			setOutfits(undefined);
 		}
-	}
+	}, [source]);
 	return outfits;
 }
 
 export function ShipGenerator(source: ReferenceSource, title?: string) {
 	let [ships, setShips] = useState(undefined as ReactElement | undefined | null);
-	if (ships === undefined) {
+	useEffect(() => {
 		if (source.type === 'outfit') {
 			getAllReferences(new ReferenceSource(isLicense(source) ? 'license' : source.type, isLicense(source) ? getLicenseName(source) : source.name), 'ship').then(shipReferences => {
 				if (isLicense(source)) {
@@ -671,14 +705,16 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 					setShips(null);
 				}
 			});
+		} else {
+			setShips(undefined);
 		}
-	}
+	}, [source]);
 	return ships;
 }
 
 export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 	let [outfitters, setOutfitters] = useState(undefined as ReactElement | undefined);
-	if (!outfitters) {
+	useEffect(() => {
 		if (source.type === 'outfit') {
 			if (isLicense(source)) {
 				setOutfitters(<></>);
@@ -711,14 +747,16 @@ export function OutfitterGenerator(source: ReferenceSource, title?: string) {
 					</section>)
 				}
 			});
+		} else {
+			setOutfitters(undefined);
 		}
-	}
+	}, [source, title]);
 	return outfitters;
 }
 
 export function ShipyardGenerator(source: ReferenceSource, title?: string) {
 	let [shipyards, setShipyards] = useState(undefined as ReactElement | undefined);
-	if (!shipyards) {
+	useEffect(() => {
 		if (source.type === 'ship') {
 			getAllReferences(source, 'shipyard').then(shipyardReferences => {
 				if (shipyardReferences.length > 0) {
@@ -747,14 +785,16 @@ export function ShipyardGenerator(source: ReferenceSource, title?: string) {
 					</section>)
 				}
 			});
+		} else {
+			setShipyards(undefined);
 		}
-	}
+	}, [source]);
 	return shipyards;
 }
 
 export function VariantListGenerator(source: ReferenceSource, title?: string) {
 	let [variants, setVariants] = useState(undefined as ReactElement | undefined);
-	if (!variants) {
+	useEffect(() => {
 		if (source.type === 'ship') {
 			getAllReferences(source, 'ship').then(references => {
 				if (references.length > 0) {
@@ -764,15 +804,17 @@ export function VariantListGenerator(source: ReferenceSource, title?: string) {
 					</section>);
 				}
 			});
+		} else {
+			setVariants(undefined);
 		}
-	}
+	}, [source]);
 	return variants;
 }
 
 export function FleetListGenerator(source: ReferenceSource, title?: string) {
 	let [fleets, setFleets] = useState(undefined as ReactElement | undefined);
 
-	if (!fleets) {
+	useEffect(() => {
 		switch (source.type) {
 			case 'system':
 				getParsedData(source).then(data => data as System).then(data => {
@@ -793,8 +835,12 @@ export function FleetListGenerator(source: ReferenceSource, title?: string) {
 							: <>This ship doesn't appear in any fleet.</>}
 					</section>);
 				});
+				break;
+			default:
+				setFleets(undefined);
+				break;
 		}
-	}
+	}, [source]);
 	return fleets;
 }
 
@@ -802,15 +848,23 @@ export function TriviaGenerator(source: ReferenceSource, title?: string) {
 	let [changelogEntries, setChangelogEntries] = useState(new Array<ChangeData>());
 	let [data, setData] = useState(undefined as ObjectData | undefined);
 
+	useEffect(() => {
+		if(isMultiPart(source)) {
+			setChangelogEntries([]);
+		} else {
+			getChangelog(source).then(changelog => setChangelogEntries(changelog));
+		}
+	}, [source]);
+	useEffect(() => {
+		if(isMultiPart(source)) {
+			setData(undefined);
+		} else {
+			getData(source).then(data => setData(data));
+		}
+	}, [source]);
+
 	if (isMultiPart(source)) {
 		return undefined;
-	}
-
-	if (changelogEntries.length === 0) {
-		getChangelog(source).then(changelog => setChangelogEntries(changelog));
-	}
-	if (!data) {
-		getData(source).then(data => setData(data));
 	}
 
 	const components: Array<ReactElement> = new Array<React.ReactElement>();
