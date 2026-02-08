@@ -14,6 +14,7 @@ import {
 	isLicense,
 	isMultiPart,
 	ReferenceSource,
+	toString,
 	typeToString
 } from "../data/ReferenceSource.ts";
 import React, {ReactElement, useEffect, useState} from "react";
@@ -47,6 +48,7 @@ import {
 	Wormhole
 } from "../data/DataScheme.tsx";
 import {MapItemNavigation} from "../components/MapNavigator.tsx";
+import Giscus from "@giscus/react";
 
 export type SectionGenerator = (source: ReferenceSource, title?: string) => Element | Element[] | ReactElement | ReactElement[] | undefined | null;
 
@@ -66,6 +68,7 @@ export class PageGenerator {
 	variants?: SectionGenerator = VariantListGenerator;
 	fleets?: SectionGenerator = FleetListGenerator;
 	trivia?: SectionGenerator = TriviaGenerator;
+	discussion?: SectionGenerator = DiscussionGenerator;
 
 	static empty(): PageGenerator {
 		const gen = new PageGenerator();
@@ -122,6 +125,7 @@ function WikiPage(props: SourceProps) {
 		{generator.variants ? generator.variants.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.fleets ? generator.fleets.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.trivia ? generator.trivia.call(generator, props.source, props.title) ?? <></> : <></>}
+		{generator.discussion ? generator.discussion.call(generator, props.source, props.title) ?? <></> : <></>}
 	</>;
 }
 
@@ -129,8 +133,12 @@ export function TitleGenerator(source: ReferenceSource, title?: string) {
 	let [heading, setHeading] = useState(undefined as ReactElement | undefined);
 	if (!heading) {
 		if (title) {
-			setHeading(<h1>{title}</h1>);
+			document.getElementById('meta-og-title')?.setAttribute('content', title);
+			setHeading(<>
+				<h1>{title}</h1>
+			</>);
 		} else {
+			document.getElementById('meta-og-title')?.setAttribute('content', toString(source));
 			getDisplayName(source).then(displayName => {
 				setHeading(
 					<>
@@ -758,6 +766,31 @@ export function TriviaGenerator(source: ReferenceSource, title?: string) {
 	}
 
 	return components.length > 1 ? <section>{components}</section> : undefined;
+}
+
+export function DiscussionGenerator(source: ReferenceSource, title?: string) {
+	if (isMultiPart(source)) {
+		return undefined;
+	}
+	return <section>
+		<h2>Discussion</h2>
+		<div className="discussion-container">
+			<Giscus
+				repo="tibetiroka/endless-sky-wiki-generator"
+				repoId="R_kgDOQW1tFg"
+				category="giscus"
+				categoryId="DIC_kwDOQW1tFs4C2CYG"
+				mapping="og:title"
+				term="Welcome to @giscus/react component!"
+				reactionsEnabled="0"
+				emitMetadata="0"
+				inputPosition="bottom"
+				theme="dark"
+				lang="en"
+				loading="lazy"
+			/>
+		</div>
+	</section>
 }
 
 export default WikiPage;
