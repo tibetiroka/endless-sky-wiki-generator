@@ -508,7 +508,7 @@ export class System extends GameObject {
 		function addObjects(array: SystemObject[], parentPos: Point) {
 			for (const systemObject of array) {
 				const pos = new Point([systemObject.object.distance, 0]);
-				const rotation = systemObject.object.offset + 2 * Math.PI / systemObject.object.period * time;
+				const rotation = Math.PI * systemObject.object.offset / 180 + 2 * Math.PI / systemObject.object.period * time;
 				pos.rotateAround(rotation, new Point());
 				pos.add(parentPos);
 				allPos.min.min(pos);
