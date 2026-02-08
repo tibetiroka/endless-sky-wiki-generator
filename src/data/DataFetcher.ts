@@ -16,6 +16,7 @@ const ES_DEFAULT_INTERACTIVE_REF: string = "master";
 const DATA_CACHE = new Map<ReferenceSource, Promise<ObjectData>>();
 const PARSED_DATA_CACHE = new Map<ReferenceSource, Promise<GameObject>>();
 const CHANGELOG_CACHE = new Map<ReferenceSource, Promise<ChangeData[]>>();
+const ALL_RAW_DATA_CACHE = new Map<string, Promise<Map<string, ObjectData>>>();
 const ALL_DATA_CACHE = new Map<string, Promise<Map<string, GameObject>>>();
 
 type DisplayNameData = { [U: string]: ReferenceSource[] };
@@ -98,21 +99,34 @@ export function getFileList(): Promise<GameFileList> {
 	return FILE_LIST_CACHE;
 }
 
-export function getAllData(type: string, allowRemoved: boolean = false): Promise<Map<string, GameObject>> {
-	if (ALL_DATA_CACHE.has(type)) {
-		return ALL_DATA_CACHE.get(type) as Promise<Map<string, GameObject>>;
+export function getAllRawData(type: string, allowRemoved: boolean = false): Promise<Map<string, ObjectData>> {
+	if (ALL_RAW_DATA_CACHE.has(type)) {
+		return ALL_RAW_DATA_CACHE.get(type) as Promise<Map<string, ObjectData>>;
 	}
-	const promise: Promise<Map<string, GameObject>> = fetchData('data/' + type + '/all', 0)
+	const promise: Promise<Map<string, ObjectData>> = fetchData('data/' + type + '/all', 0)
 		.then(data => {
 			const sourceBuffer: ArrayBuffer = new TextEncoder().encode(data).buffer;
 			return untar(sourceBuffer);
 		})
 		.then(files => files.map(file => new ObjectData(new ReferenceSource(type, file.name), file.readAsJSON()))
-			.filter(data => allowRemoved || !data.isRemoved())
-			.map(data => data.parse()))
+			.filter(data => allowRemoved || !data.isRemoved()))
+		.then(data => {
+			const map = new Map<string, ObjectData>();
+			data.forEach(datum => map.set(datum.getSource().name as string, datum));
+			return map;
+		});
+	ALL_RAW_DATA_CACHE.set(type, promise);
+	return promise;
+}
+
+export function getAllData(type: string, allowRemoved: boolean = false): Promise<Map<string, GameObject>> {
+	if (ALL_DATA_CACHE.has(type)) {
+		return ALL_DATA_CACHE.get(type) as Promise<Map<string, GameObject>>;
+	}
+	const promise: Promise<Map<string, GameObject>> = getAllRawData(type, allowRemoved)
 		.then(data => {
 			const map = new Map<string, GameObject>();
-			data.forEach(datum => map.set(datum.name, datum));
+			data.forEach((datum, key) => map.set(key, datum.parse()));
 			return map;
 		});
 	ALL_DATA_CACHE.set(type, promise);

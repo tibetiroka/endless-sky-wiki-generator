@@ -19,6 +19,7 @@ import {
 } from "../data/ReferenceSource.ts";
 import React, {ReactElement, useEffect, useState} from "react";
 import {
+	getAllRawData,
 	getChangelog,
 	getCommitURL,
 	getData,
@@ -41,6 +42,7 @@ import {
 	ConditionalText,
 	Fleet,
 	getAllReferenceObjects,
+	Government, Outfit,
 	Planet,
 	Ship,
 	Shop,
@@ -61,6 +63,7 @@ export class PageGenerator {
 	landingLocations?: SectionGenerator = LandingLocationGenerator;
 	links?: SectionGenerator = LinkGenerator;
 	location?: SectionGenerator = LocationGenerator;
+	licenses?: SectionGenerator = LicenseGenerator;
 	outfits?: SectionGenerator = OutfitGenerator;
 	ships?: SectionGenerator = ShipGenerator;
 	outfitters?: SectionGenerator = OutfitterGenerator;
@@ -78,6 +81,7 @@ export class PageGenerator {
 		gen.landingLocations = undefined;
 		gen.links = undefined;
 		gen.location = undefined;
+		gen.licenses = undefined;
 		gen.outfits = undefined;
 		gen.ships = undefined;
 		gen.outfitters = undefined;
@@ -118,6 +122,7 @@ function WikiPage(props: SourceProps) {
 		{generator.landingLocations ? generator.landingLocations.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.links ? generator.links.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.location ? generator.location.call(generator, props.source, props.title) ?? <></> : <></>}
+		{generator.licenses ? generator.licenses.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.outfits ? generator.outfits.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.ships ? generator.ships.call(generator, props.source, props.title) ?? <></> : <></>}
 		{generator.outfitters ? generator.outfitters.call(generator, props.source, props.title) ?? <></> : <></>}
@@ -469,6 +474,28 @@ export function LocationGenerator(source: ReferenceSource, title?: string) {
 	return location;
 }
 
+export function LicenseGenerator(source: ReferenceSource, title?: string) {
+	let [licenses, setLicenses] = useState(undefined as string[] | undefined);
+	if (licenses === undefined) {
+		switch (source.type) {
+			case 'ship':
+				getParsedData(source).then(ship => setLicenses((ship as Ship).licenses()));
+				break;
+			case 'outfit':
+				getParsedData(source).then(outfit => setLicenses((outfit as Outfit).licenses));
+				break;
+		}
+	}
+	console.log(licenses);
+	if(licenses && licenses.length > 0) {
+		return <section>
+			<h2>Licenses</h2>
+			<ReferenceLinkList sources={licenses.map(l=> new ReferenceSource('outfit', l + ' License'))} title={'The following licenses are required to purchase this ' + source.type + ':'}/>
+		</section>
+	}
+	return undefined;
+}
+
 export function OutfitGenerator(source: ReferenceSource, title?: string) {
 	let [outfits, setOutfits] = useState(undefined as ReactElement | undefined | null);
 	if (outfits === undefined) {
@@ -498,6 +525,25 @@ export function OutfitGenerator(source: ReferenceSource, title?: string) {
 							<ReferenceLinkList sources={data.stock.map(outfit => new ReferenceSource('outfit', outfit))} categoryType={'outfit'} title='Outfits sold here:'/>
 							: "This outfitter doesn't sell any outfits."}
 					</section>
+				);
+			});
+		} else if (source.type === 'government') {
+			getParsedData(source).then(data => data as Government).then(data => {
+				getAllRawData('outfit').then(outfits => {
+						const govOutfits = outfits.values().filter(object => {
+							const parts = object.getLocation().filename.split('/');
+							return parts[parts.length - 1].startsWith((source.name as string).toLowerCase());
+						}).toArray();
+						if (govOutfits.length === 0) {
+							setOutfits(<></>);
+						} else {
+							setOutfits(<section>
+								<h2>Outfits</h2>
+								<ReferenceLinkList sources={govOutfits.map(outfit => outfit.getSource())} categoryType='outfit' title='Outfits belonging to this government:'/>
+								<small><i>This list may be incorrect or incomplete. The game doesn't assign outfits to governments; anything shown here is a guess based on the names and locations of data files. It may also include outfits belonging to other governments which are used in missions in this faction's campaign.</i></small>
+							</section>);
+						}
+					}
 				);
 			});
 		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
@@ -591,6 +637,25 @@ export function ShipGenerator(source: ReferenceSource, title?: string) {
 						This fleet doesn't have any ships.
 					</section>);
 				}
+			});
+		} else if (source.type === 'government') {
+			getParsedData(source).then(data => data as Government).then(data => {
+				getAllRawData('ship').then(ships => {
+						const govShips = ships.values().filter(object => {
+							const parts = object.getLocation().filename.split('/');
+							return parts[parts.length - 1].startsWith((source.name as string).toLowerCase());
+						}).toArray();
+						if (govShips.length === 0) {
+							setShips(<></>);
+						} else {
+							setShips(<section>
+								<h2>Ships</h2>
+								<ReferenceLinkList sources={govShips.map(ship => ship.getSource())} categoryType='ship' title='Ships belonging to this government:'/>
+								<small><i>This list may be incorrect or incomplete. The game doesn't assign ships to governments; anything shown here is a guess based on the names and locations of data files. It may also include ships belonging to other governments which are used in missions in this faction's campaign.</i></small>
+							</section>);
+						}
+					}
+				);
 			});
 		} else if (isMultiPart(source) && getParts(source)[0] === 'category') {
 			getAllReferences(source, 'ship').then(shipReferences => {

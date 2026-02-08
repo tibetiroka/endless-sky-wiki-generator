@@ -396,6 +396,15 @@ export class Ship extends GameObject {
 			return {type: bay.name, pos: new Point(bay.values)};
 		});
 	}
+
+	licenses(): string[] {
+		const licenses = this.attributes?.licenses;
+		if(licenses) {
+			return Object.keys(licenses);
+		} else {
+			return [];
+		}
+	}
 }
 
 export class Star extends GameObject {
