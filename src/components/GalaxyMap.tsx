@@ -17,7 +17,7 @@ import {AnimationDisplay} from "./AnimationDisplay.tsx";
 import {SystemMap} from "./SystemMap.tsx";
 import {createPath} from "../web_utils.ts";
 
-type GalaxyMapProps = { name: string, time?: number, className?: string };
+type GalaxyMapProps = { focus?: string, time?: number, className?: string };
 
 export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 	return <EmbeddedViewRenderer
@@ -36,7 +36,7 @@ export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 			state => <i className={'bi ' + (state ? 'bi-crosshair2' : 'bi-crosshair')}/>
 		]}
 		passthroughProps={{
-			name: props.name,
+			focus: props.focus,
 			className: props.className
 		}}/>;
 }
@@ -44,7 +44,7 @@ export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 	// user state
 	const [initialOffset, setInitialOffset] = useState(undefined as Point | undefined);
-	const [selectedSystem, setSelectedSystem] = useState(props.passthroughProps.name as string);
+	const [selectedSystem, setSelectedSystem] = useState((props.passthroughProps.focus ?? '') as string);
 	// static data
 	const [galaxies, setGalaxies] = useState(undefined as Galaxy[] | undefined);
 	const [governmentColors, setGovernmentColors] = useState(new Map<string, GameColor>());
@@ -255,17 +255,17 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 		let baseOffset_: Point | undefined;
 		if (!initialOffset) {
 			systems.forEach(system => {
-				if (system.name === props.passthroughProps.name) {
+				if (system.name === selectedSystem) {
 					baseOffset_ = new Point(system.pos);
 					baseOffset_.multiply(-1);
 					setInitialOffset(baseOffset_);
-					setSelectedSystem(props.passthroughProps.name);
-				}
-				if (!baseOffset_) {
-					baseOffset_ = new Point();
-					setInitialOffset(new Point());
+					setSelectedSystem(selectedSystem);
 				}
 			});
+			if (!baseOffset_) {
+				baseOffset_ = new Point();
+				setInitialOffset(new Point());
+			}
 		} else {
 			baseOffset_ = initialOffset;
 		}

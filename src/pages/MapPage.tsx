@@ -40,16 +40,13 @@ export function MapPage() {
 				</section>
 			</>
 		case 'galaxy':
-			if (!focus) {
-				return <GoHome/>
-			}
 			if (!titleSet) {
 				document.title = 'Galaxy view | ' + document.title;
 			}
 			return <>
 				<section>
 					<h1>Galaxy map</h1>
-					<GalaxyMap name={focus} className='standalone-map'/>
+					<GalaxyMap focus={focus ?? undefined} className='standalone-map'/>
 				</section>
 			</>
 		default:
