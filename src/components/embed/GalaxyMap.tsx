@@ -125,9 +125,7 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 			left: label.pos.x,
 			transform: `translate(50cqw, 50cqh) translate(-50%, -50%)`
 		}}>
-			<div style={{scale: label.sprite?.scale}}>
-				<AnimationDisplay source={'everything/' + label.sprite?.name} title={label.displayName ?? label.sprite}/>
-			</div>
+			<AnimationDisplay source={['galaxy/' + label.name + '/sprite', label.sprite]} title={label.displayName ?? label.sprite?.displayName}/>
 		</div>));
 	}, [galaxies]);
 

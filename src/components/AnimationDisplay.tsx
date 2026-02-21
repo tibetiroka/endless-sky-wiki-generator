@@ -10,17 +10,21 @@
 
 import {getDataUrl} from "../web_utils.ts";
 import {getEsUrl} from "../data/DataFetcher.ts"
-import {CSSProperties, SyntheticEvent} from "react";
+import {CSSProperties, ReactElement, SyntheticEvent, useCallback, useEffect, useState} from "react";
+import {asArray, Sprite} from "../data/DataScheme.tsx";
 
 type OnLoadType = (event: SyntheticEvent<HTMLImageElement, Event>) => void;
 type AnimationDisplayProps = {
-	source: string,
+	source: string | Sprite | undefined | (string | Sprite | undefined)[],
 	onLoad?: OnLoadType,
 	title?: string,
 	style?: CSSProperties
 };
 
-export function getImageUrl(source: string): URL {
+export function getImageUrl(source: string | Sprite): URL {
+	if (typeof (source) !== 'string') {
+		source = 'everything/' + source.name;
+	}
 	if (source.startsWith('everything/')) {
 		source = source.substring(0, source.lastIndexOf('/'))
 			+ '/sprite_'
@@ -30,23 +34,44 @@ export function getImageUrl(source: string): URL {
 }
 
 export function AnimationDisplay(props: AnimationDisplayProps) {
-	if (!props.source) {
-		return;
-	}
+	const [sourceIndex, setSourceIndex] = useState(0);
+	const [sourceUrls, setSourceUrls] = useState([] as string[]);
+	const [image, setImage] = useState(undefined as undefined | ReactElement);
 
-	return <div className='animation-display-wrapper'>
-		<img className='animation-display'
-			 src={getImageUrl(props.source).toString()}
-			 title={props.title}
-			 alt=''
-			 loading='lazy'
-			 style={props.style}
-			 onError={(error) => {
-				 (error.target as any).src = getEsUrl('images/outfit/unknown.png').toString();
-			 }}
-			 onDragStart={event => {
-				 event.preventDefault();
-			 }}
-			 onLoad={props.onLoad}/>
-	</div>
+	useEffect(() => {
+		let sources: (string | Sprite)[] = asArray(props.source).filter(source => source !== undefined && source !== '');
+		sources = sources.map(source => getImageUrl(source).toString());
+		sources.push(getEsUrl('images/outfit/unknown.png').toString());
+		setSourceUrls(sources as string[]);
+		setSourceIndex(0);
+	}, [props.source]);
+
+	const onError = useCallback((_: any) => {
+		setSourceIndex(sourceIndex + 1);
+	}, [sourceIndex]);
+
+	useEffect(() => {
+		if (sourceIndex < sourceUrls.length) {
+			setImage(<div className='animation-display-wrapper'>
+				<img className='animation-display'
+					 src={sourceUrls[sourceIndex]}
+					 title={props.title}
+					 alt=''
+					 loading='lazy'
+					 style={
+						 {
+							 scale: Array.isArray(props.source) && props.source.length < sourceIndex && typeof (props.source[sourceIndex]) !== 'string' ? (props.source[sourceIndex] as Sprite).scale : undefined,
+							 ...props.style
+						 }
+					 }
+					 onError={onError}
+					 onDragStart={event => {
+						 event.preventDefault();
+					 }}
+					 onLoad={props.onLoad}/>
+			</div>);
+		}
+	}, [sourceIndex, sourceUrls, props, onError]);
+
+	return image;
 }

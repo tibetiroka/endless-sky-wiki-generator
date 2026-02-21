@@ -16,6 +16,7 @@ import {AnimationDisplay} from "./AnimationDisplay.tsx"
 import {Tab, Tabs} from "react-bootstrap";
 import {arrayEquals} from "../utils.ts";
 import {SystemMap} from "./embed/SystemMap.tsx";
+import {Sprite} from "../data/DataScheme.tsx";
 
 type StatBoxProps = { elements: ReferenceSource[] }
 
@@ -294,7 +295,9 @@ export function StatBox(props: StatBoxProps) {
 						{data.map((obj, i) => {
 							const systems: ReferenceSource[] = references[i];
 							if (systems.length > 0) {
-								return <td key={i}><SystemMap name={systems[0].name as string} center={obj.getData().name} className='stat-box-map'/></td>
+								return <td key={i}>
+									<SystemMap name={systems[0].name as string} center={obj.getData().name} className='stat-box-map'/>
+								</td>
 							}
 							return undefined;
 						})}
@@ -306,7 +309,8 @@ export function StatBox(props: StatBoxProps) {
 				rows.push(<tr key='map'>
 					{data.length === 1 ? undefined : <td></td>}
 					{data.map((obj, i) => {
-						return <td key={i}><SystemMap name={obj.getData().name as string} className='stat-box-map'/></td>
+						return <td key={i}><SystemMap name={obj.getData().name as string} className='stat-box-map'/>
+						</td>
 					})}
 				</tr>);
 				break;
@@ -344,39 +348,41 @@ export function StatBox(props: StatBoxProps) {
 type CombinedImageDisplayProps = { data: ObjectData };
 
 function CombinedImageDisplay(props: CombinedImageDisplayProps) {
-	const images: { name: string, animation?: string }[] = [];
+	const images: { name: string, animation?: (string | Sprite)[] }[] = [];
 
 	function toEncodedString(source: ReferenceSource): string {
 		return source.type + '/' + encodeSourceName(source.name as string);
 	}
 
+	const dataObj: any = props.data.parse();
+
 	images.push({
 		name: 'Thumbnail',
-		animation: props.data.getData()['thumbnail'] ? toEncodedString(props.data.getSource()) + '/thumbnail' : undefined
+		animation: props.data.getData()['thumbnail'] ? [toEncodedString(props.data.getSource()) + '/thumbnail', dataObj.thumbnail] : undefined
 	});
 	images.push({
 		name: 'Overhead',
-		animation: props.data.getData()['sprite'] ? toEncodedString(props.data.getSource()) + '/sprite' : undefined
+		animation: props.data.getData()['sprite'] ? [toEncodedString(props.data.getSource()) + '/sprite', dataObj.sprite] : undefined
 	});
 	images.push({
 		name: 'Landscape',
-		animation: props.data.getData()['landscape'] ? toEncodedString(props.data.getSource()) + '/landscape' : undefined
+		animation: props.data.getData()['landscape'] ? [toEncodedString(props.data.getSource()) + '/landscape', dataObj.landscape] : undefined
 	});
 	images.push({
 		name: 'Icon',
-		animation: props.data.getData()['icon'] ? toEncodedString(props.data.getSource()) + '/icon' : undefined
+		animation: props.data.getData()['icon'] ? [toEncodedString(props.data.getSource()) + '/icon', dataObj.icon] : undefined
 	});
 
 	const existingImages = images.filter(image => image.animation);
 	if (existingImages.length > 1) {
 		return <Tabs className='combined-image-display-tabs'>
 			{existingImages.map(image => <Tab key={image.name} eventKey={image.name} title={image.name}>
-				<AnimationDisplay source={image.animation as string}/>
+				<AnimationDisplay source={image.animation}/>
 			</Tab>)}
 		</Tabs>
 	} else if (existingImages.length === 1) {
-		return <AnimationDisplay source={existingImages[0].animation as string}></AnimationDisplay>
+		return <AnimationDisplay source={existingImages[0].animation}></AnimationDisplay>
 	} else {
-		return <AnimationDisplay source={'outfits/cloaking device/sprite'}></AnimationDisplay>
+		return <AnimationDisplay source={undefined}></AnimationDisplay>
 	}
 }

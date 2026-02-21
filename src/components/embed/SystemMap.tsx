@@ -48,7 +48,7 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 	}, [props.passthroughProps.name]);
 
 	useEffect(() => {
-		if(system) {
+		if (system) {
 			const objectPositions = system.objectsAndPositions(props.passthroughProps.time);
 			for (const object of objectPositions.objects) {
 				if (object.object.isPlanet && (object.object.object as SystemPlanet).gameObject.name === props.passthroughProps.center) {
@@ -59,7 +59,7 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 	}, [props.passthroughProps.time, props.passthroughProps.center, system]);
 
 	useEffect(() => {
-		if(!system) {
+		if (!system) {
 			return;
 		}
 		const actualOffset = new Point(initialOffset);
@@ -144,9 +144,10 @@ function SystemMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 											}
 											event?.preventDefault();
 										}}>
-								<div style={{scale: obj.object.object.sprite?.scale}}>
-									<AnimationDisplay source={'everything/' + obj.object.object.sprite?.name} title={objectName}/>
-								</div>
+								<AnimationDisplay source={[
+									obj.object.isPlanet ? 'planet/' + (obj.object.object as SystemPlanet).gameObject.name + '/sprite' : '',
+									obj.object.object.sprite ?? '']
+								} title={objectName}/>
 							</div>
 						})
 					}
