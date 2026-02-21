@@ -8,7 +8,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {useState} from "react";
+import {useCallback, useState} from "react";
 import {SystemMap} from "../components/embed/SystemMap.tsx";
 import {GalaxyMap} from "../components/embed/GalaxyMap.tsx";
 import {GoHome} from "../components/GoHome.tsx";
@@ -20,6 +20,18 @@ export function MapPage() {
 		setTitleSet(true);
 		// titleSet won't update during this call, so we can query it still
 	}
+
+	const focusChangeCallback = useCallback((newFocus: string) => {
+		const url = new URL(window.location.href);
+		if(newFocus === '') {
+			url.searchParams.delete('focus');
+		} else {
+			url.searchParams.set('focus', newFocus);
+		}
+		if(url.toString() !== window.location.href) {
+			window.history.replaceState(null, '', url.toString());
+		}
+	}, []);
 
 	const urlParams = new URLSearchParams(window.location.search);
 	const type: string | null = urlParams.get('type');
@@ -33,22 +45,18 @@ export function MapPage() {
 			if (!titleSet) {
 				document.title = 'System view | ' + document.title;
 			}
-			return <>
-				<section>
+			return <section>
 					<h1>Map of {system}</h1>
 					<SystemMap name={system} center={focus ?? undefined} className='standalone-map'/>
 				</section>
-			</>
 		case 'galaxy':
 			if (!titleSet) {
 				document.title = 'Galaxy view | ' + document.title;
 			}
-			return <>
-				<section>
+			return <section>
 					<h1>Galaxy map</h1>
-					<GalaxyMap focus={focus ?? undefined} className='standalone-map'/>
+					<GalaxyMap focus={focus ?? undefined} focusChangeCallback={focusChangeCallback} className='standalone-map'/>
 				</section>
-			</>
 		default:
 			return <GoHome/>;
 	}

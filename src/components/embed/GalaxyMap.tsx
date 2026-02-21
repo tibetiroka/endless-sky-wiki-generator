@@ -17,7 +17,11 @@ import {AnimationDisplay} from "../AnimationDisplay.tsx";
 import {SystemMap} from "./SystemMap.tsx";
 import {createPath} from "../../web_utils.ts";
 
-type GalaxyMapProps = { focus?: string, time?: number, className?: string };
+type GalaxyMapProps = {
+	focus?: string,
+	className?: string,
+	focusChangeCallback?: (focus: string) => void
+};
 
 export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 	return <EmbeddedViewRenderer
@@ -37,6 +41,7 @@ export function GalaxyMap(props: GalaxyMapProps): ReactElement | undefined {
 		]}
 		passthroughProps={{
 			focus: props.focus,
+			focusChangeCallback: props.focusChangeCallback,
 			className: props.className
 		}}/>;
 }
@@ -346,6 +351,11 @@ function GalaxyMapRenderer(props: ViewRendererProps): ReactElement | undefined {
 			}}><SystemMap name={selectedSystem} className={'stat-box-map'}/></div> : undefined}
 		</div>);
 	}, [props, initialOffset, selectedSystem, systemMap, systems, minSystemPos, maxSystemPos, mapGalaxies, mapHyperlanes, mapWormholes, mapLabels, mapSystems]);
+
+	// Change url with selected system
+	useEffect(() => {
+		props.passthroughProps.focusChangeCallback(selectedSystem);
+	}, [selectedSystem, props.passthroughProps, props.passthroughProps.focusChangeCallback]);
 
 	return map;
 }
