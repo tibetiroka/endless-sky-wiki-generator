@@ -70,8 +70,25 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 		}
 	}, [latestOffset, latestOffsetTicking]);
 
+	const onWheel = useCallback((e: WheelEvent) => {
+		addScale(-e.deltaY / 50);
+		e.preventDefault();
+		e.stopPropagation();
+	}, [addScale]);
+
+	const refCallback = useCallback(
+		(node: any) => {
+			if (node == null) {
+				return;
+			}
+			node.addEventListener('wheel', onWheel, { passive: false });
+		},
+		[onWheel],
+	);
+
 	useEffect(() => {
 		const div = <div
+			ref={refCallback}
 			className={`embedded-view-renderer ${props.className}`}
 			onMouseMove={event => {
 				if (event.buttons & 1) {
@@ -133,7 +150,7 @@ export function EmbeddedViewRenderer(props: EmbeddedViewRendererProps): ReactEle
 			}
 		</div> as ReactElement;
 		setRender(div);
-	}, [props, scale, offset, customButtonStates, addOffset, addScale]);
+	}, [props, scale, offset, customButtonStates, addOffset, addScale, refCallback]);
 
 	return render;
 }
