@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 by tibetiroka.
+ * Copyright (c) 2025-2026 by tibetiroka.
  *
  * endless-sky-wiki-generator is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
@@ -9,12 +9,12 @@
  */
 
 import {ReactElement, useEffect, useState} from "react";
-import {getParsedData} from "../data/DataFetcher.ts";
-import {ReferenceSource} from "../data/ReferenceSource.ts";
-import {Point, System, SystemPlanet} from "../data/DataScheme.tsx";
-import {AnimationDisplay, getImageUrl} from "./AnimationDisplay.tsx";
-import {EmbeddedViewRenderer, ViewRendererProps} from "./embed/EmbeddedView.tsx";
-import {createPath} from "../web_utils.ts";
+import {getParsedData} from "../../data/DataFetcher.ts";
+import {ReferenceSource} from "../../data/ReferenceSource.ts";
+import {Point, System, SystemPlanet} from "../../data/DataScheme.tsx";
+import {AnimationDisplay, getImageUrl} from "../AnimationDisplay.tsx";
+import {EmbeddedViewRenderer, ViewRendererProps} from "./EmbeddedView.tsx";
+import {createPath} from "../../web_utils.ts";
 
 type SystemMapProps = { name: string, center?: string, time?: number, className?: string };
 

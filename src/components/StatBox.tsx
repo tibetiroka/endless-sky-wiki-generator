@@ -15,7 +15,7 @@ import {ObjectData} from "../data/ObjectData.ts";
 import {AnimationDisplay} from "./AnimationDisplay.tsx"
 import {Tab, Tabs} from "react-bootstrap";
 import {arrayEquals} from "../utils.ts";
-import {SystemMap} from "./SystemMap.tsx";
+import {SystemMap} from "./embed/SystemMap.tsx";
 
 type StatBoxProps = { elements: ReferenceSource[] }
 

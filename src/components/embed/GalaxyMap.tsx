@@ -9,13 +9,13 @@
  */
 
 import {ReactElement, useEffect, useState} from "react";
-import {EmbeddedViewRenderer, ViewRendererProps} from "./embed/EmbeddedView.tsx";
-import {getAllData, getIndex, getParsedData} from "../data/DataFetcher.ts";
-import {ReferenceSource} from "../data/ReferenceSource.ts";
-import {Galaxy, GameColor, GameObject, Government, Point, System, Wormhole} from "../data/DataScheme.tsx";
-import {AnimationDisplay} from "./AnimationDisplay.tsx";
+import {EmbeddedViewRenderer, ViewRendererProps} from "./EmbeddedView.tsx";
+import {getAllData, getIndex, getParsedData} from "../../data/DataFetcher.ts";
+import {ReferenceSource} from "../../data/ReferenceSource.ts";
+import {Galaxy, GameColor, GameObject, Government, Point, System, Wormhole} from "../../data/DataScheme.tsx";
+import {AnimationDisplay} from "../AnimationDisplay.tsx";
 import {SystemMap} from "./SystemMap.tsx";
-import {createPath} from "../web_utils.ts";
+import {createPath} from "../../web_utils.ts";
 
 type GalaxyMapProps = { focus?: string, time?: number, className?: string };
 

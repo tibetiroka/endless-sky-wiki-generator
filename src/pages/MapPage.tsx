@@ -9,8 +9,8 @@
  */
 
 import {useState} from "react";
-import {SystemMap} from "../components/SystemMap.tsx";
-import {GalaxyMap} from "../components/GalaxyMap.tsx";
+import {SystemMap} from "../components/embed/SystemMap.tsx";
+import {GalaxyMap} from "../components/embed/GalaxyMap.tsx";
 import {GoHome} from "../components/GoHome.tsx";
 
 export function MapPage() {
