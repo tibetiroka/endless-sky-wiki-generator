@@ -151,7 +151,7 @@ public class Main {
 											     }
 											     Map<String, String> attributes = (Map<String, String>) ship.data.get("attributes");
 											     addedMap.forEach((key, value) -> {
-												     if(!key.equals("name")) {
+												     if(!key.equals("name") && value.getClass().equals(String.class)) {
 													     double attributeValue = Double.parseDouble((String) value);
 													     double previousValue = Double.parseDouble(attributes.getOrDefault(key, "0"));
 													     attributes.put((String) key, Double.toString(attributeValue + previousValue));
